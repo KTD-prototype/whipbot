@@ -71,6 +71,9 @@ void loop() {
     Serial.println(roll);
     Serial.println(pitch);
     Serial.println(heading);
+    Serial.println(accelX);
+    Serial.println(accelY);
+    Serial.println(accelZ);
     Serial.println(gyroX);
     Serial.println(gyroY);
     Serial.println(gyroZ);
