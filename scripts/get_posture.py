@@ -64,10 +64,6 @@ if __name__ == '__main__':
             posture_angle_pub.publish(posture)
             imu_pub.publish(imu_data)
 
-            # pub2.publish(imu_data)
-            # rospy.loginfo('Hello World')
-            # print("time : " + str(passed_time))
-
         except IOError:
             pass
 
