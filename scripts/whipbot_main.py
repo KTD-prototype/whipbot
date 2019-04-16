@@ -7,7 +7,7 @@ import serial
 import time
 import signal
 import sys
-from whipbot.msg import posture_angle
+from whipbot.msg import Posture_angle
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
 
@@ -38,15 +38,15 @@ def generate_command():
     twist_command.angular.z = roll
 
 
-def shutdown(self):
+def shutdown():
     print("shutdown")
 
 
 if __name__ == '__main__':
     rospy.init_node('whipbot_main')
-
+    rospy.on_shutdown(shutdown)
     pub_command = rospy.Publisher('twist_command', Twist, queue_size=1)
-    rospy.Subscriber('posture_angle', posture_angle,
+    rospy.Subscriber('posture_angle', Posture_angle,
                      callback_get_posture, queue_size=1)
     rospy.Subscriber('imu', Imu,
                      callback_get_imu, queue_size=1)
