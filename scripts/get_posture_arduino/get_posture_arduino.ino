@@ -8,7 +8,7 @@ LSM9DS1 imu;
 #define LSM9DS1_AG  0x6A // Would be 0x6A if SDO_AG is LOW
 
 // define the number of sample to get data to calibrate and sampling rate
-#define NUM_OF_SAMPLES_FOR_INIT 500
+#define NUM_OF_SAMPLES_FOR_INIT 200
 #define SAMPLING_RATE 100
 
 volatile int interrupt_flag = 1;
@@ -26,7 +26,7 @@ float accelX, accelY, accelZ, gyroX, gyroY, gyroZ, magX, magY, magZ, roll, pitch
 
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(57600);
 
   imu.settings.device.commInterface = IMU_MODE_I2C;
   imu.settings.device.mAddress = LSM9DS1_M;
@@ -53,6 +53,10 @@ void setup() {
   //  Serial.println("finished initialization !");
   //  Serial.println();
 
+  while (Serial.available() > 0) {
+    Serial.read();
+  }
+
   Timer1.initialize(1000000 / SAMPLING_RATE); //interrupt per 10000 micro seconds(10 msec)
   Timer1.attachInterrupt(interrupt_function);
 }
@@ -62,11 +66,13 @@ void loop() {
     get_IMU_data();
     get_posture_complementary_filter();
     interrupt_flag = 0;
+    //    print_time();
   }
 
   if (Serial.available() > 0) {
     while (Serial.available() > 0) {
       Serial.read();
+      //      Serial.println("read!");
     }
     Serial.println(roll);
     Serial.println(pitch);
@@ -77,7 +83,8 @@ void loop() {
     Serial.println(gyroX);
     Serial.println(gyroY);
     Serial.println(gyroZ);
-    print_time();
+    //    print_time();
+    Serial.flush();
   }
 }
 

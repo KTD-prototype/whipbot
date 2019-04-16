@@ -3,7 +3,9 @@ float k, g;
 
 void get_IMU_data() {
   imu.readGyro();
+  delay(1);
   imu.readAccel();
+  delay(1);
   gyroX = imu.calcGyro(imu.gx - offset_gx);
   gyroY = imu.calcGyro(imu.gy - offset_gy);
   gyroZ = imu.calcGyro(imu.gz - offset_gz);
@@ -15,11 +17,11 @@ void get_IMU_data() {
   magZ = imu.calcMag(imu.mz);
 }
 
-void normarize_gyroZ() {
-  if (gyroZ == 0.0700 || gyroZ == 0.1400 || gyroZ == 0.2800 || gyroZ == -0.0700 || gyroZ == -0.1400 || gyroZ == -0.2800) {
-    gyroZ = 0;
-  }
-}
+//void normarize_gyroZ() {
+//  if (gyroZ == 0.0700 || gyroZ == 0.1400 || gyroZ == 0.2800 || gyroZ == -0.0700 || gyroZ == -0.1400 || gyroZ == -0.2800) {
+//    gyroZ = 0;
+//  }
+//}
 
 void get_posture_complementary_filter() {
   g = sqrt(pow(accelX, 2) + pow(accelY, 2) + pow(accelZ, 2));

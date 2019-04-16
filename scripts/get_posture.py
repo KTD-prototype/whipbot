@@ -10,7 +10,7 @@ import sys
 from whipbot.msg import Posture_angle
 from sensor_msgs.msg import Imu
 
-ser = serial.Serial('/dev/Lambda', 115200)
+ser = serial.Serial('/dev/Lambda', 57600)
 send_command = []
 send_command += [chr(1)]
 count = 0
@@ -22,11 +22,18 @@ if __name__ == '__main__':
         'posture_angle', Posture_angle, queue_size=1)
     imu_pub = rospy.Publisher('/imu', Imu, queue_size=1)
 
+    # you should wait for a while until your arduino is ready
+    time.sleep(5)
+
+    # set the loop rate at 50Hz
     rate = rospy.Rate(50)
+
     while not rospy.is_shutdown():
         try:
+            ser.reset_input_buffer()
             ser.write(send_command)
-            while ser.inWaiting() < 40:
+            # print("sended!")
+            while ser.inWaiting() < 36:
                 # print("loop")
                 # print("")
                 pass
@@ -76,9 +83,9 @@ if __name__ == '__main__':
             data[8] = data[8].replace('\r\n', '')
             data[8] = float(data[8])
 
-            passed_time = ser.readline()
-            passed_time = passed_time.replace('\r\n', '')
-            passed_time = int(passed_time)
+            # passed_time = ser.readline()
+            # passed_time = passed_time.replace('\r\n', '')
+            # passed_time = int(passed_time)
 
             posture = Posture_angle()
             imu_data = Imu()
@@ -95,6 +102,7 @@ if __name__ == '__main__':
 
             posture_angle_pub.publish(posture)
             imu_pub.publish(imu_data)
+
             # pub2.publish(imu_data)
             # rospy.loginfo('Hello World')
             # print("time : " + str(passed_time))
