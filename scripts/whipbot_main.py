@@ -15,21 +15,21 @@ pitch = 0
 roll = 0
 
 
-def callback_get_posture(posture_angle):
+def callback_get_posture(posture):
     global pitch, roll
-    roll = posture_angle.roll
-    pitch = posture_angle.pitch
-    heading = posture_angle.heading
+    roll = posture.roll
+    pitch = posture.pitch
+    heading = posture.heading
     # print(str(pitch))
 
 
-def callback_get_imu(imu):
-    accelX = imu.linear_acceleration.x
-    accelY = imu.linear_acceleration.y
-    accelZ = imu.linear_acceleration.z
-    gyroX = imu.angular_velocity.x
-    gyroY = imu.angular_velocity.y
-    gyroZ = imu.angular_velocity.z
+def callback_get_imu(imu_data):
+    accelX = imu_data.linear_acceleration.x
+    accelY = imu_data.linear_acceleration.y
+    accelZ = imu_data.linear_acceleration.z
+    gyroX = imu_data.angular_velocity.x
+    gyroY = imu_data.angular_velocity.y
+    gyroZ = imu_data.angular_velocity.z
 
 
 def generate_command():
