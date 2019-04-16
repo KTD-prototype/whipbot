@@ -12,6 +12,7 @@ LSM9DS1 imu;
 #define SAMPLING_RATE 100
 
 volatile int interrupt_flag = 1;
+int flag = 1;
 
 int previous_time = 0;
 int present_time = 0;
@@ -26,7 +27,7 @@ float accelX, accelY, accelZ, gyroX, gyroY, gyroZ, magX, magY, magZ, roll, pitch
 
 
 void setup() {
-  Serial.begin(57600);
+  Serial.begin(115200);
 
   imu.settings.device.commInterface = IMU_MODE_I2C;
   imu.settings.device.mAddress = LSM9DS1_M;
@@ -67,6 +68,19 @@ void loop() {
     get_posture_complementary_filter();
     interrupt_flag = 0;
     //    print_time();
+  }
+
+  if (flag == 1) {
+    Serial.println(roll);
+    Serial.println(pitch);
+    Serial.println(heading);
+    Serial.println(accelX);
+    Serial.println(accelY);
+    Serial.println(accelZ);
+    Serial.println(gyroX);
+    Serial.println(gyroY);
+    Serial.println(gyroZ);
+    flag = 0;
   }
 
   if (Serial.available() > 0) {
