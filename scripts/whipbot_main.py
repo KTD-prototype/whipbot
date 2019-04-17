@@ -1,6 +1,12 @@
+"""
+this node is a main node for whip bot
+it works as a hub for sensors and actuators.
+"""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # code for python2.7
+
 
 import rospy
 import serial
@@ -33,9 +39,9 @@ def callback_get_imu(imu_data):
 
 
 def generate_command():
-    global pitch, roll
-    twist_command.linear.x = pitch
-    twist_command.angular.z = roll
+    # global pitch, roll
+    twist_command.linear.x = 0
+    twist_command.angular.z = 0
 
 
 def shutdown():
@@ -46,13 +52,13 @@ if __name__ == '__main__':
     rospy.init_node('whipbot_main')
     rospy.on_shutdown(shutdown)
     pub_command = rospy.Publisher('twist_command', Twist, queue_size=1)
-    rospy.Subscriber('posture_angle', Posture_angle,
-                     callback_get_posture, queue_size=1)
-    rospy.Subscriber('imu', Imu,
-                     callback_get_imu, queue_size=1)
+    # rospy.Subscriber('posture_angle', Posture_angle,
+    #                  callback_get_posture, queue_size=1)
+    # rospy.Subscriber('imu', Imu,
+    #                  callback_get_imu, queue_size=1)
 
     twist_command = Twist()
-    rate = rospy.Rate(50)
+    rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
         try:
