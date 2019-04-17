@@ -55,14 +55,18 @@ if __name__ == '__main__':
     # you should wait for a while until your arduino is ready
     time.sleep(5)
 
-    # set the loop rate at 50Hz
-    rate = rospy.Rate(50)
+    # set the loop rate at 60Hz (higher is better, but it looks 60Hz is MAXIMUM for my environment)
+    rate = rospy.Rate(60)
 
     while not rospy.is_shutdown():
         try:
             get_data()
             posture_angle_pub.publish(posture)
             imu_pub.publish(imu_data)
+
+            # for debug(monitor loop rate)
+            # rospy.loginfo(count)
+            # count = count + 1
 
         except IOError:
             pass
