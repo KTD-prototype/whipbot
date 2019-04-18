@@ -23,6 +23,9 @@ battery_voltage_fatal_flag = 0
 BATTERY_VOLTAGE_WARN = 14.2
 BATTERY_VOLTAGE_FATAL = 13.8
 
+pitch = 0
+roll = 0
+
 
 def callback_get_servo_info(info):
     global battery_voltage_warn_flag, battery_voltage_fatal_flag
@@ -36,6 +39,13 @@ def callback_get_servo_info(info):
     elif battery_voltage < BATTERY_VOLTAGE_FATAL and battery_voltage_fatal_flag == 0:
         rospy.logfatal('battery voltage is low !')
         battery_voltage_fatal_flag = 1
+
+
+def callback_get_posture(posture):
+    global pitch, roll
+    roll = posture.roll
+    pitch = posture.pitch
+    heading = posture.heading
 
 
 def callback_get_command_from_main(twist_command):
@@ -59,6 +69,9 @@ if __name__ == '__main__':
 
     rospy.Subscriber('twist_command', Twist,
                      callback_get_command_from_main, queue_size=1)
+
+    rospy.Subscriber('posture_angle', Posture_angle,
+                     callback_get_posture, queue_size=1)
 
     rospy.Subscriber('joy', Joy, callback_get_command_from_joy, queue_size=5)
 
