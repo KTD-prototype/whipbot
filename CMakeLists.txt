@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
+  kondo_b3mservo_rosdriver
 )
 
 ## System dependencies are found with CMake's conventions

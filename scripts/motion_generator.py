@@ -14,9 +14,10 @@ import signal
 import sys
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Joy
 from whipbot.msg import Posture_angle
-from kondo_b3kondo_b3mservo_rosdriver.msg import Servo_command
-from kondo_b3kondo_b3mservo_rosdriver.msg import Servo_info
+from kondo_b3mservo_rosdriver.msg import Servo_command
+from kondo_b3mservo_rosdriver.msg import Servo_info
 
 battery_voltage_warn_flag = 0
 battery_voltage_fatal_flag = 0
@@ -58,8 +59,12 @@ def callback_get_command_from_joy(joy_msg):
     teleop_angular_vel = joy_msg.axes[3]
 
 
+def generate_command():
+    pass
+
+
 if __name__ == '__main__':
-    rospy.init_node('motor_control')
+    rospy.init_node('motion_control')
 
     pub_motor_control = rospy.Publisher(
         'servo_command', Servo_command, queue_size=1)
@@ -82,7 +87,7 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         try:
             generate_command()
-            pub_command.publish(servo_command)
+            pub_motor_control.publish(servo_command)
 
         except IOError:
             pass
