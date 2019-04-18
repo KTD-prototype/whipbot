@@ -31,8 +31,9 @@ roll = 0
 def callback_get_servo_info(info):
     global battery_voltage_warn_flag, battery_voltage_fatal_flag
     encoder_count = info.encoder_count
-    battery_voltage = info.motor_voltage
+    battery_voltage = 14.0
     velocity = info.motor_velocity
+    rospy.loginfo('hello')
 
     if battery_voltage < BATTERY_VOLTAGE_WARN and battery_voltage_warn_flag == 0:
         rospy.logwarn('battery voltage is low !')
@@ -64,7 +65,7 @@ def generate_command():
 
 
 if __name__ == '__main__':
-    rospy.init_node('motion_control')
+    rospy.init_node('motion_generator')
 
     pub_motor_control = rospy.Publisher(
         'servo_command', Servo_command, queue_size=1)
