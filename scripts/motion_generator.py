@@ -21,9 +21,11 @@ from kondo_b3mservo_rosdriver.msg import Servo_info
 
 battery_voltage_warn_flag = 0
 battery_voltage_fatal_flag = 0
-BATTERY_VOLTAGE_WARN = 14.2
-BATTERY_VOLTAGE_FATAL = 13.8
+BATTERY_VOLTAGE_WARN = 14200
+BATTERY_VOLTAGE_FATAL = 13800
 
+lenear_vel = 0
+angular_vel = 0
 teleop_lenear_vel = 0
 teleop_angular_vel = 0
 
@@ -34,7 +36,7 @@ roll = 0
 def callback_get_servo_info(info):
     global battery_voltage_warn_flag, battery_voltage_fatal_flag
     encoder_count = info.encoder_count
-    battery_voltage = 14.0
+    battery_voltage = info.input_voltage
     velocity = info.motor_velocity
 
     if battery_voltage < BATTERY_VOLTAGE_WARN and battery_voltage_warn_flag == 0:
@@ -53,6 +55,7 @@ def callback_get_posture(posture):
 
 
 def callback_get_command_from_main(twist_command):
+    global linear_vel, angular_vel
     linear_vel = twist_command.linear.x
     angular_vel = twist_command.angular.z
     # rospy.loginfo('hello')
@@ -65,17 +68,22 @@ def callback_get_command_from_joy(joy_msg):
 
 
 def generate_command():
-    global teleop_lenear_vel, teleop_angular_vel
+    global teleop_lenear_vel, teleop_angular_vel, linear_vel, angular_vel
     if teleop_lenear_vel != 0 or teleop_angular_vel != 0:
         whipbot_motion.linear.x = teleop_lenear_vel
         whipbot_motion.angular.z = teleop_angular_vel
-        pub_motor_control.publish(whipbot_motion)
+        pub_motion_control.publish(whipbot_motion)
+
+    else:
+        whipbot_motion.linear.x = lenear_vel
+        whipbot_motion.angular.z = angular_vel
+        pub_motion_control.publish(whipbot_motion)
 
 
 if __name__ == '__main__':
     rospy.init_node('motion_generator')
 
-    pub_motor_control = rospy.Publisher(
+    pub_motion_control = rospy.Publisher(
         'whipbot_motion', Twist, queue_size=1)
 
     rospy.Subscriber('servo_info', Servo_info,
