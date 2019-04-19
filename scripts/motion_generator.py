@@ -1,6 +1,6 @@
 """
-this node is a motor command generator node for whip bot
-it also works as interface node for servo.
+this node is a motion generator node for whip bot
+it also works as interface node for servo controller node.
 """
 
 #!/usr/bin/env python
