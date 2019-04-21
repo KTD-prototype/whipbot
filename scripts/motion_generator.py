@@ -1,11 +1,12 @@
-"""
-this node is a motion generator node for whip bot
-it also works as interface node for servo controller node.
-"""
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # code for python2.7
+
+#
+# this node is a motion generator node for whip bot
+# it also works as interface node for servo controller node.
+#
+
 
 import rospy
 import serial

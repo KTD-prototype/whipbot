@@ -1,12 +1,11 @@
-#
-# this node is a main node for whip bot
-# it works as a hub for sensors and actuators.
-#
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # code for python2.7
 
+#
+# this node is a main node for whip bot
+# it works as a hub for sensors and actuators.
+#
 
 import rospy
 import serial

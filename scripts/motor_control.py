@@ -1,11 +1,12 @@
-"""
-this node is a motor command generator node for whip bot maneuver.
-It works as interface node for servo.
-"""
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # code for python2.7
+
+#
+# this node is a motor command generator node for whip bot maneuver.
+# It works as interface node for servo.
+#
+
 
 import rospy
 import serial

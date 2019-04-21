@@ -1,11 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# code for python2.7
+
 #
 # this node is a interface node to arduino
 # it collects IMU data from arduino.
 #
 
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# code for python2.7
 
 import rospy
 import serial
