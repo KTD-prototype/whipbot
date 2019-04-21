@@ -4,10 +4,10 @@
   <node name="motion_generator"   pkg="whipbot" type="motion_generator" output="screen"/>
   <node name="motor_control"   pkg="whipbot" type="motor_control" />
 
-  <node name="torque_control_left"   pkg="kondo_b3mservo_rosdriver" type="torque_control" output="screen"/>
+  <node name="torque_control_left"   pkg="kondo_b3mservo_rosdriver" type="torque_control" output="screen">
     <param name="servo_id" value="4"/>
   </node>
-  <node name="torque_control_right"   pkg="kondo_b3mservo_rosdriver" type="torque_control" output="screen"/>
+  <node name="torque_control_right"   pkg="kondo_b3mservo_rosdriver" type="torque_control" output="screen">
     <param name="servo_id" value="5"/>
   </node>
 
