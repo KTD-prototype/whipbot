@@ -1,0 +1,15 @@
+<launch>
+  <node name="whipbot_main"   pkg="whipbot" type="whipbot_main" />
+  <node name="get_sernsor" pkg="whipbot" type="get_sernsor" output="screen"/>
+  <node name="motion_generator"   pkg="whipbot" type="motion_generator" output="screen"/>
+  <node name="motor_control"   pkg="whipbot" type="motor_control" />
+
+  <node name="torque_control_left"   pkg="kondo_b3mservo_rosdriver" type="torque_control" output="screen"/>
+    <param name="servo_id" value="4"/>
+  </node>
+  <node name="torque_control_right"   pkg="kondo_b3mservo_rosdriver" type="torque_control" output="screen"/>
+    <param name="servo_id" value="5"/>
+  </node>
+
+  <node name="joy_node"   pkg="joy" type="joy_node" />
+</launch>
