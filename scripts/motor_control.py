@@ -30,17 +30,23 @@ def callback_get_motion(motion):
 
 def command_servo():
     global vel, ang
-    servo_command.servo_id = 4
-    servo_command.target_torque = vel * 3000
-    pub_motor_control.publish(servo_command)
+
+    servo_command_right.target_torque = vel * 3000
+    pub_motor_control_right.publish(servo_command_right)
+
+    servo_command_left.target_torque = vel * 3000
+    pub_motor_control_left.publish(servo_command_left)
 
 
 if __name__ == '__main__':
     rospy.init_node('motor_control')
 
-    pub_motor_control = rospy.Publisher(
-        'servo_command', Servo_command, queue_size=1)
-    servo_command = Servo_command()
+    pub_motor_control_right = rospy.Publisher(
+        'servo_command_right', Servo_command, queue_size=1)
+    pub_motor_control_left = rospy.Publisher(
+        'servo_command_left', Servo_command, queue_size=1)
+    servo_command_right = Servo_command()
+    servo_command_left = Servo_command()
 
     rospy.Subscriber('whipbot_motion', Twist,
                      callback_get_motion, queue_size=1)
