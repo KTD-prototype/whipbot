@@ -32,6 +32,7 @@ def set_the_num_of_servo():
         rospy.logerr("value error: the number of servos")
         sys.exit(1)
     return num
+#
 
 
 def callback_get_motion(motion):
