@@ -19,6 +19,19 @@ from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
 vel = 0
 ang = 0
+num = 0
+
+
+def set_the_num_of_servo():
+    global num
+    num = rospy.get_param('num_of_servo')
+    try:
+        if num < 0:
+            raise Exception()
+    except:
+        rospy.logerr("value error: the number of servos")
+        sys.exit(1)
+    return num
 
 
 def callback_get_motion(motion):
@@ -29,10 +42,11 @@ def callback_get_motion(motion):
 
 
 def command_servo():
-    global vel, ang
-
-    servo_command_right.target_torque = vel * 3000
-    pub_motor_control_right.publish(servo_command_right)
+    global vel, ang, num
+    for i in range(num):
+        servo_command.target_torque.append(vel * 3000)
+    pub_motor_control.publish(servo_command)
+    del servo_command
 
 
 if __name__ == '__main__':
