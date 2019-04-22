@@ -24,7 +24,7 @@ num = 0
 
 def set_the_num_of_servo():
     global num
-    num = rospy.get_param('num_of_servo')
+    num = rospy.get_param('~num_of_servo')
     try:
         if num < 0:
             raise Exception()

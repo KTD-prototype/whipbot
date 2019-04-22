@@ -5,8 +5,8 @@
   <node name="motor_control"   pkg="whipbot" type="motor_control.py"/>
 
   <node name="motor_command"   pkg="kondo_b3mservo_rosdriver" type="multi_torque_control.py" output="screen">
-    <param name="/motor_command/multi_servo_id" value="[4]"/>
-    <param name="/motor_command/num_of_servo" value="1"/>
+    <param name="multi_servo_id" value="4,5"/>
+    <param name="num_of_servo" value="2"/>
   </node>
 
   <node name="joy_node"   pkg="joy" type="joy_node">
