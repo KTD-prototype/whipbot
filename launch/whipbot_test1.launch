@@ -4,18 +4,10 @@
   <node name="motion_generator"   pkg="whipbot" type="motion_generator.py" output="screen"/>
   <node name="motor_control"   pkg="whipbot" type="motor_control.py"/>
 
-  <node name="torque_control_left"   pkg="kondo_b3mservo_rosdriver" type="torque_control.py" output="screen">
-    <param name="servo_id" value="4"/>
-    <remap from="servo_command" to="servo_command_left"/>
-    <remap from="servo_info" to="servo_info_left"/>
+  <node name="motor_command"   pkg="kondo_b3mservo_rosdriver" type="multi_torque_control.py" output="screen">
+    <param name="multi_servo_id" value="[4]"/>
+    <param name="num_of_servo" value="1"/>
   </node>
-
-  <!-- <node name="torque_control_right"   pkg="kondo_b3mservo_rosdriver" type="torque_control.py" output="screen">
-    <param name="servo_id" value="5"/>
-    <remap from="servo_command" to="servo_command_right"/>
-    <remap from="servo_info" to="servo_info_right"/>
-  </node> -->
-
 
   <node name="joy_node"   pkg="joy" type="joy_node">
     <param name="autorepeat_rate" value="10"/>

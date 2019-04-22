@@ -14,8 +14,8 @@ import time
 import signal
 import sys
 from geometry_msgs.msg import Twist
-from kondo_b3mservo_rosdriver.msg import Servo_command
-from kondo_b3mservo_rosdriver.msg import Servo_info
+from kondo_b3mservo_rosdriver.msg import Multi_servo_command
+from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
 vel = 0
 ang = 0
@@ -34,21 +34,14 @@ def command_servo():
     servo_command_right.target_torque = vel * 3000
     pub_motor_control_right.publish(servo_command_right)
 
-    servo_command_left.target_torque = vel * 3000
-    pub_motor_control_left.publish(servo_command_left)
-
 
 if __name__ == '__main__':
     rospy.init_node('motor_control')
 
-    pub_motor_control_right = rospy.Publisher(
-        'servo_command_right', Servo_command, queue_size=1)
-    pub_motor_control_left = rospy.Publisher(
-        'servo_command_left', Servo_command, queue_size=1)
-    servo_command_right = Servo_command()
-    servo_command_left = Servo_command()
+    pub_motor_control = rospy.Publisher(
+        'servo_command', Multi_servo_command, queue_size=1)
+    servo_command = Multi_servo_command()
 
     rospy.Subscriber('whipbot_motion', Twist,
                      callback_get_motion, queue_size=1)
-
     rospy.spin()
