@@ -20,15 +20,17 @@ from whipbot.msg import Posture_angle
 from kondo_b3mservo_rosdriver.msg import Multi_servo_command
 from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
+# variables and constants to watch battery boltage
 battery_voltage_warn_flag = 0
 battery_voltage_fatal_flag = 0
 BATTERY_VOLTAGE_WARN = 14200
 BATTERY_VOLTAGE_FATAL = 13900
 
+# variables for velocity command from other nodes or joypad.
 lenear_vel = 0
 angular_vel = 0
-teleop_lenear_vel = 0
-teleop_angular_vel = 0
+joy_lenear_vel = 0
+joy_angular_vel = 0
 
 pitch = 0
 roll = 0
@@ -49,6 +51,8 @@ def callback_get_servo_info(servo_info):
 
     calc_odometry()
 
+    
+
 def callback_get_posture(posture):
     global pitch, roll, heading
     roll = posture.roll
@@ -64,16 +68,16 @@ def callback_get_command_from_main(twist_command):
 
 
 def callback_get_command_from_joy(joy_msg):
-    global teleop_lenear_vel, teleop_angular_vel
-    teleop_lenear_vel = joy_msg.axes[1]
-    teleop_angular_vel = joy_msg.axes[3]
+    global joy_lenear_vel, joy_angular_vel
+    joy_lenear_vel = joy_msg.axes[1]
+    joy_angular_vel = joy_msg.axes[3]
 
 
 def generate_command():
-    global teleop_lenear_vel, teleop_angular_vel, linear_vel, angular_vel
-    if teleop_lenear_vel != 0 or teleop_angular_vel != 0:
-        whipbot_motion.linear.x = teleop_lenear_vel
-        whipbot_motion.angular.z = teleop_angular_vel
+    global joy_lenear_vel, joy_angular_vel, linear_vel, angular_vel
+    if joy_lenear_vel != 0 or joy_angular_vel != 0:
+        whipbot_motion.linear.x = joy_lenear_vel
+        whipbot_motion.angular.z = joy_angular_vel
         pub_motion_control.publish(whipbot_motion)
 
     else:
