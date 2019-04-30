@@ -28,9 +28,10 @@ encoder_count = []
 motor_velocity = []
 velocity_left = 0 # velocity to ground [m/s]
 velocity_right = 0 # velocity to ground [m/s]
-count = 0
 odometry_count = 0
-
+robot_location = [0.0, 0.0] #relative location from a start point: [x, y]
+robot_orientation = 0.0 #relative orientation from a  start orientation
+robot_velocity = [0.0, 0.0] #robot velocity : [linear vel, angular vel]
 
 # variables and constants to watch battery boltage
 battery_voltage_warn_flag = 0
@@ -54,19 +55,8 @@ def callback_get_servo_info(servo_info):
     calculate_odometry()
 
 
-def calculate_odometry():
-    global encoder_count, motor_velocity, velocity_left, velocity_right, count, odometry_count
-    wheel_odometry.header.frame_id = '1'
-    wheel_odometry.child.frame_id = '1'
-
-    count = count + 1
-    current_time = time.time()
-    dt = current_time - last_time
-
-
-
-
-if __name__ == '__main__':
+def main_function():
+    global encoder_count, motor_velocity, velocity_left, velocity_right, odometry_count
     rospy.init_node('wheel_odometry')
 
     wheel_odometry_pub = rospy.Publisher(
@@ -78,13 +68,33 @@ if __name__ == '__main__':
                      callback_get_posture, queue_size=1)
 
     wheel_odometry = Odometry()
+    wheel_odometry.header.frame_id = '1'
+    wheel_odometry.child.frame_id = '1'
+
+    current_time = time.time()
+    last_time = time.time()
 
     rate = rospy.Rate(50)
     while not rospy.is_shutdown():
         try:
-            culc_wheel_odometry()
+            current_time = time.time()
+            dt = current_time - last_time
+            wheel_odometry.header.seq = odometry_count
+            wheel_odometry.pose.pose.position.x = robot_location[0]
+            wheel_odometry.pose.pose.position.y = robot_location[1]
+            wheel_odometry.pose.pose.orientation.w = robot_orientation
+            wheel_odometry.twist.twist.linear.x = robot_velocity[0]
+            wheel_odometry.twist.twist.angular.z = robot_velocity[1]
+            wheel_odometry_pub.publisht(wheel_odometry)
+            odometry_count = odometry_count + 1
+            last_time = time.time()
 
         except IOError:
             pass
 
         rate.sleep()
+
+
+
+if __name__ == '__main__':
+    main_function()
