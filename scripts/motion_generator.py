@@ -51,7 +51,6 @@ def callback_get_servo_info(servo_info):
 
     calc_odometry()
 
-    
 
 def callback_get_posture(posture):
     global pitch, roll, heading
