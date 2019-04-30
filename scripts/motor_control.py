@@ -14,6 +14,8 @@ import time
 import signal
 import sys
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Imu
+from whipbot.msg import Posture_angle
 from kondo_b3mservo_rosdriver.msg import Multi_servo_command
 from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
@@ -21,18 +23,13 @@ vel = 0
 ang = 0
 num = 0
 
-
-def set_the_num_of_servo():
+def callback_init(number):
     global num
-    num = rospy.get_param('~num_of_servo')
-    try:
-        if num < 0:
-            raise Exception()
-    except:
-        rospy.logerr("value error: the number of servos")
-        sys.exit(1)
-    return num
-#
+    num = number.data
+    for i in range(num):
+        target_position.append(0)
+        target_velocity.append(0)
+        target_torque.append(0)
 
 
 def callback_get_motion(motion):
@@ -57,6 +54,7 @@ if __name__ == '__main__':
     pub_motor_control = rospy.Publisher(
         'multi_servo_command', Multi_servo_command, queue_size=1)
 
+    rospy.Subscriber('the_number_of_servo', Int16, callback_init, queue_size=1)
     rospy.Subscriber('whipbot_motion', Twist,
                      callback_get_motion, queue_size=1)
     rospy.spin()

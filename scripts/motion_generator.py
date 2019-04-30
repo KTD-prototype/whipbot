@@ -17,15 +17,13 @@ from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 from whipbot.msg import Posture_angle
-from kondo_b3mservo_rosdriver.msg import Servo_command
-from kondo_b3mservo_rosdriver.msg import Servo_info
+from kondo_b3mservo_rosdriver.msg import Multi_servo_command
+from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
-battery_voltage_warn_flag_left = 0
-battery_voltage_fatal_flag_left = 0
-battery_voltage_warn_flag_right = 0
-battery_voltage_fatal_flag_right = 0
+battery_voltage_warn_flag = 0
+battery_voltage_fatal_flag = 0
 BATTERY_VOLTAGE_WARN = 14200
-BATTERY_VOLTAGE_FATAL = 13800
+BATTERY_VOLTAGE_FATAL = 13900
 
 lenear_vel = 0
 angular_vel = 0
@@ -34,38 +32,25 @@ teleop_angular_vel = 0
 
 pitch = 0
 roll = 0
+heading = 0
 
 
-def callback_get_servo_info_left(info_left):
-    global battery_voltage_warn_flag_left, battery_voltage_fatal_flag_left
-    encoder_count_left = info_left.encoder_count
-    battery_voltage_left = info_left.input_voltage
-    velocity_left = info_left.motor_velocity
+def callback_get_servo_info(servo_info):
+    global battery_voltage_warn_flag, battery_voltage_fatal_flag
+    encoder_count = servo_info.encoder_count
+    battery_voltage = servo_info.input_voltage
+    motor_velocity = servo_info.motor_velocity
 
-    if battery_voltage_left < BATTERY_VOLTAGE_WARN and battery_voltage_warn_flag_left == 0:
+    if battery_voltage[0] < BATTERY_VOLTAGE_WARN and battery_voltage_warn_flag == 0:
         rospy.logwarn('battery voltage is low !')
         battery_voltage_warn_flag_left = 1
-    elif battery_voltage_left < BATTERY_VOLTAGE_FATAL and battery_voltage_fatal_flag_left == 0:
-        rospy.logfatal('battery voltage is low !')
-        battery_voltage_fatal_flag = 1
+    elif battery_voltage[0] < BATTERY_VOLTAGE_FATAL:
+        rospy.logfatal('battery voltage is fatally low !')
 
-
-def callback_get_servo_info_right(info_right):
-    global battery_voltage_warn_flag_right, battery_voltage_fatal_flag_right
-    encoder_count_right = info_right.encoder_count
-    battery_voltage_right = info_right.input_voltage
-    velocity_right = info_right.motor_velocity
-
-    if battery_voltage_right < BATTERY_VOLTAGE_WARN and battery_voltage_warn_flag_right == 0:
-        rospy.logwarn('battery voltage is low !')
-        battery_voltage_warn_flag_right = 1
-    elif battery_voltage_right < BATTERY_VOLTAGE_FATAL and battery_voltage_fatal_flag_right == 0:
-        rospy.logfatal('battery voltage is low !')
-        battery_voltage_fatal_flag_right = 1
-
+    calc_odometry()
 
 def callback_get_posture(posture):
-    global pitch, roll
+    global pitch, roll, heading
     roll = posture.roll
     pitch = posture.pitch
     heading = posture.heading
@@ -103,12 +88,8 @@ if __name__ == '__main__':
     pub_motion_control = rospy.Publisher(
         'whipbot_motion', Twist, queue_size=1)
 
-    rospy.Subscriber('servo_info_left', Servo_info,
-                     callback_get_servo_info_left, queue_size=1)
-    rospy.Subscriber('servo_info_right', Servo_info,
-                     callback_get_servo_info_right, queue_size=1)
-    rospy.Subscriber('twist_command', Twist,
-                     callback_get_command_from_main, queue_size=1)
+    rospy.Subscriber('multi_servo_info', Multi_servo_info,
+                     callback_get_servo_info, queue_size=1)
     rospy.Subscriber('posture_angle', Posture_angle,
                      callback_get_posture, queue_size=1)
     rospy.Subscriber('joy', Joy, callback_get_command_from_joy, queue_size=5)
