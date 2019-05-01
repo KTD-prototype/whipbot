@@ -83,7 +83,8 @@ def generate_command():
         for i in range(3):
             delta_robot_location[i] = current_robot_location[i] - last_robot_location[i]
             accumulated_error_of_robot_location[i] = accumulated_error_of_robot_location[i] + delta_robot_location[i]
-
+        hovering_linear_vel = 0
+        hovering_angular_vel = 0
         whipbot_motion.linear.x = hovering_linear_vel
         whipbot_motion.angular.z = hovering_angular_vel
         pub_motion_control.publish(whipbot_motion)
