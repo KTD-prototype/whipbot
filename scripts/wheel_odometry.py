@@ -30,9 +30,10 @@ motor_velocity = [0, 0]
 velocity_left = 0 # velocity to ground [m/s]
 velocity_right = 0 # velocity to ground [m/s]
 odometry_count = 0
-robot_location = [0.0, 0.0] #relative location from a start point: [x, y]
-robot_orientation = 0.0 #relative orientation from a  start orientation
+current_robot_location = [0.0, 0.0, 0.0] #current relative location from a start point : [x, y, theta]
+last_robot_location = [0.0, 0.0, 0.0] #last relative location from a start point : [x, y, theta]
 robot_velocity = [0.0, 0.0] #robot velocity : [linear vel, angular vel]
+dt = 0
 
 # variables and constants to watch battery boltage
 battery_voltage_warn_flag = 0
@@ -42,7 +43,7 @@ BATTERY_VOLTAGE_FATAL = 13900 #publish warnings when battery voltage is lower th
 
 
 def main_function():
-    global odometry_count, current_time, last_time, robot_location, robot_orientation, robot_velocity
+    global odometry_count, current_time, last_time, current_robot_location, last_robot_location, robot_velocity
     rospy.init_node('wheel_odometry')
 
     wheel_odometry_pub = rospy.Publisher(
@@ -65,14 +66,16 @@ def main_function():
         try:
             current_time = time.time()
             dt = current_time - last_time
+            calculate_odometry()
             wheel_odometry.header.seq = odometry_count
-            wheel_odometry.pose.pose.position.x = robot_location[0]
-            wheel_odometry.pose.pose.position.y = robot_location[1]
-            wheel_odometry.pose.pose.orientation.w = robot_orientation
+            wheel_odometry.pose.pose.position.x = current_robot_location[0]
+            wheel_odometry.pose.pose.position.y = current_robot_location[1]
+            wheel_odometry.pose.pose.orientation.w = current_robot_location[2]
             wheel_odometry.twist.twist.linear.x = robot_velocity[0]
             wheel_odometry.twist.twist.angular.z = robot_velocity[1]
             wheel_odometry_pub.publisht(wheel_odometry)
             odometry_count = odometry_count + 1
+            last_robot_location = current_robot_location
             last_time = time.time()
 
         except IOError:
@@ -94,18 +97,21 @@ def callback_get_servo_info(servo_info):
     elif battery_voltage[0] < BATTERY_VOLTAGE_FATAL:
         rospy.logfatal('battery voltage is fatally low !')
 
-    calculate_odometry()
 
 
-def calculate_odometry):
-    global robot_location, robot_orientation, robot_velocity, velocity_left, velocity_right, current_encoder_count, last_encoder_count, motor_velocity, current_time, last_time, dt
+def calculate_odometry():
+    global current_robot_location, last_robot_location, robot_velocity, velocity_left, velocity_right, current_encoder_count, last_encoder_count, motor_velocity, current_time, last_time, dt
 
     delta_encoder = [x-y for (x,y) in zip(current_encoder_count, last_encoder_count)]
-    velocity_left = ((delta_encoder[0] / PULSE_PER_ROUND) * pi * WHEEL_DIAMETER) / dt
-    velocity_right = ((delta_encoder[1] / PULSE_PER_ROUND) * pi * WHEEL_DIAMETER) / dt
+    velocity_left = ((delta_encoder[0] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
+    velocity_right = ((delta_encoder[1] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
 
-    robot_velocity[0] = (velocity_left + velocity_right) / 2.0
-    robot_velocity[1] = (velocity_right - velocity_left) / (TREAD / 2.0)
+    current_robot_location[0] = last_robot_location[0] + robot_velocity[0] * math.cos(last_robot_location[2]) * dt
+    current_robot_location[1] = last_robot_location[1] + robot_velocity[0] * math.sin(last_robot_location[2]) * dt
+    current_robot_location[2] = last_robot_location[2] + robot_velocity[1] * dt
+
+    robot_velocity[0] = (velocity_left + velocity_right) / 2.0 # linear velocity [m/s]
+    robot_velocity[1] = (velocity_right - velocity_left) / TREAD # angular velocity [rad/s]
 
 
 
