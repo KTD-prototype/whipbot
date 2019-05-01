@@ -125,6 +125,5 @@ def calculate_odometry():
     # last_robot_location_2 = current_robot_location_2
 
 
-
 if __name__ == '__main__':
     main_function()
