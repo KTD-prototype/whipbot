@@ -58,9 +58,6 @@ def main_function():
     wheel_odometry.header.frame_id = '1'
     wheel_odometry.child.frame_id = '1'
 
-    current_time = time.time()
-    last_time = time.time()
-
     rate = rospy.Rate(50)
     while not rospy.is_shutdown():
         try:
