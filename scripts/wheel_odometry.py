@@ -81,7 +81,6 @@ def main_function():
         rate.sleep()
 
 
-
 def callback_get_servo_info(servo_info):
     global battery_voltage_warn_flag, battery_voltage_fatal_flag, current_encoder_count, motor_velocity
     current_encoder_count = servo_info.encoder_count
@@ -93,7 +92,6 @@ def callback_get_servo_info(servo_info):
         battery_voltage_warn_flag_left = 1
     elif battery_voltage[0] < BATTERY_VOLTAGE_FATAL:
         rospy.logfatal('battery voltage is fatally low !')
-
 
 
 def calculate_odometry():
