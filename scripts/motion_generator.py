@@ -21,8 +21,8 @@ from whipbot.msg import Posture_angle
 
 
 # variables for velocity command from other nodes or joypad.
-lenear_vel = 0
-angular_vel = 0
+main_lenear_vel = 0
+main_angular_vel = 0
 joy_lenear_vel = 0
 joy_angular_vel = 0
 
@@ -45,8 +45,8 @@ def callback_get_posture(posture):
 
 def callback_get_command_from_main(twist_command):
     global linear_vel, angular_vel
-    linear_vel = twist_command.linear.x
-    angular_vel = twist_command.angular.z
+    main_linear_vel = twist_command.linear.x
+    main_angular_vel = twist_command.angular.z
     # rospy.loginfo('hello')
 
 
@@ -56,16 +56,23 @@ def callback_get_command_from_joy(joy_msg):
     joy_angular_vel = joy_msg.axes[3]
 
 
+def callback_get_odometry(wheel_odometry):
+    current_robot_location[0] = wheel_odometry.pose.pose.position.x
+    current_robot_location[1] = wheel_odometry.pose.pose.position.y
+    current_robot_location[2] = wheel_odometry.pose.pose.orientation.w
+
+
 def generate_command():
-    global joy_lenear_vel, joy_angular_vel, linear_vel, angular_vel
+    global joy_lenear_vel, joy_angular_vel, main_linear_vel, main_angular_vel
+    
     if joy_lenear_vel != 0 or joy_angular_vel != 0:
         whipbot_motion.linear.x = joy_lenear_vel
         whipbot_motion.angular.z = joy_angular_vel
         pub_motion_control.publish(whipbot_motion)
 
-    else:
-        whipbot_motion.linear.x = lenear_vel
-        whipbot_motion.angular.z = angular_vel
+    elif main_linear_vel != 0 or main_angular_vel != 0:
+        whipbot_motion.linear.x = main_linear_vel
+        whipbot_motion.angular.z = main_angular_vel
         pub_motion_control.publish(whipbot_motion)
 
 
@@ -80,6 +87,7 @@ if __name__ == '__main__':
     rospy.Subscriber('posture_angle', Posture_angle,
                      callback_get_posture, queue_size=1)
     rospy.Subscriber('joy', Joy, callback_get_command_from_joy, queue_size=5)
+    rospy.Subscriber('main_command', Twist, callback_get_command_from_main, queue_size=5)
 
     whipbot_motion = Twist()
     rate = rospy.Rate(50)

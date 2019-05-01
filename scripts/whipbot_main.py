@@ -39,8 +39,8 @@ def callback_get_imu(imu_data):
 
 def generate_command():
     # global pitch, roll
-    twist_command.linear.x = 0
-    twist_command.angular.z = 0
+    main_command.linear.x = 0
+    main_command.angular.z = 0
 
 
 def shutdown():
@@ -50,19 +50,19 @@ def shutdown():
 if __name__ == '__main__':
     rospy.init_node('whipbot_main')
     rospy.on_shutdown(shutdown)
-    pub_command = rospy.Publisher('twist_command', Twist, queue_size=1)
+    pub_command = rospy.Publisher('main_command', Twist, queue_size=1)
     # rospy.Subscriber('posture_angle', Posture_angle,
     #                  callback_get_posture, queue_size=1)
     # rospy.Subscriber('imu', Imu,
     #                  callback_get_imu, queue_size=1)
 
-    twist_command = Twist()
+    main_command = Twist()
     rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
         try:
             generate_command()
-            pub_command.publish(twist_command)
+            pub_command.publish(main_command)
 
         except IOError:
             pass
