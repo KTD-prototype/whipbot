@@ -19,8 +19,8 @@ from whipbot.msg import Posture_angle
 from kondo_b3mservo_rosdriver.msg import Multi_servo_command
 from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
-vel = 0
-ang = 0
+linear_velocity_command = 0.0
+angular_velocity_command = 0.0
 num = 0
 
 def callback_init(number):
@@ -32,10 +32,10 @@ def callback_init(number):
         target_torque.append(0)
 
 
-def callback_get_motion(motion):
-    global vel, ang
-    vel = motion.linear.x
-    ang = motion.angular.z
+def callback_get_motion(whipbot_motion):
+    global linear_velocity_command, angular_velocity_command
+    linear_velocity_command = whipbot_motion.linear.x
+    angular_velocity_command = whipbot_motion.angular.z
     command_servo()
 
 
