@@ -19,21 +19,24 @@ current_time = time.time()
 last_time = time.time()
 
 # constants for wheel odometry of the robot
-PULSE_PER_ROUND = 4096 #pulse per a round of the wheel
-WHEEL_DIAMETER = 0.1524 # wheel diameter of the robot[m] : 6 inch
-TREAD = 0.26 # tread width of the robot[m] 294mm - 34.925mm
+float PULSE_PER_ROUND = 4096.0 #pulse per a round of the wheel
+float WHEEL_DIAMETER = 0.1524 # wheel diameter of the robot[m] : 6 inch
+float TREAD = 0.26 # tread width of the robot[m] 294mm - 34.925mm
+
 
 # variables for wheel odometry of the robot
-current_encoder_count = [0, 0]
-last_encoder_count = [0, 0]
-motor_velocity = [0, 0]
-velocity_left = 0 # velocity to ground [m/s]
-velocity_right = 0 # velocity to ground [m/s]
+current_encoder_count = [0.0, 0.0]
+last_encoder_count = [0.0, 0.0]
+motor_velocity = [0.0, 0.0]
+velocity_left = 0.0 # velocity to ground [m/s]
+velocity_right = 0.0 # velocity to ground [m/s]
 odometry_count = 0
 current_robot_location = [0.0, 0.0, 0.0] #current relative location from a start point : [x, y, theta]
 last_robot_location = [0.0, 0.0, 0.0] #last relative location from a start point : [x, y, theta]
 robot_velocity = [0.0, 0.0] #robot velocity : [linear vel, angular vel]
-dt = 0
+dt = 0.0
+current_robot_location_2 = [0.0, 0.0, 0.0]
+last_robot_location_2 = [0.0, 0.0, 0.0]
 
 # variables and constants to watch battery boltage
 battery_voltage_warn_flag = 0
@@ -73,6 +76,7 @@ def main_function():
             wheel_odometry_pub.publisht(wheel_odometry)
             odometry_count = odometry_count + 1
             last_robot_location = current_robot_location
+            last_encoder_count = current_encoder_count
             last_time = time.time()
 
         except IOError:
@@ -95,11 +99,11 @@ def callback_get_servo_info(servo_info):
 
 
 def calculate_odometry():
-    global current_robot_location, last_robot_location, robot_velocity, velocity_left, velocity_right, current_encoder_count, last_encoder_count, motor_velocity, current_time, last_time, dt
+    global current_robot_location, last_robot_location, robot_velocity, velocity_left, velocity_right, current_encoder_count, last_encoder_count, motor_velocity, current_time, last_time, dt, current_robot_location_2, last_robot_location_2, motor_velocity
 
     delta_encoder = [x-y for (x,y) in zip(current_encoder_count, last_encoder_count)]
-    velocity_left = ((delta_encoder[0] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
-    velocity_right = ((delta_encoder[1] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
+    velocity_left = ((float(delta_encoder[0]) / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
+    velocity_right = ((float(delta_encoder[1]) / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
 
     current_robot_location[0] = last_robot_location[0] + robot_velocity[0] * math.cos(last_robot_location[2]) * dt
     current_robot_location[1] = last_robot_location[1] + robot_velocity[0] * math.sin(last_robot_location[2]) * dt
@@ -107,6 +111,18 @@ def calculate_odometry():
 
     robot_velocity[0] = (velocity_left + velocity_right) / 2.0 # linear velocity [m/s]
     robot_velocity[1] = (velocity_right - velocity_left) / TREAD # angular velocity [rad/s]
+
+    # velocity_left_2 = (float(motor_velocity[0]) / 100.0) * math.pi / 180.0
+    # velocity_right_2 = (float(motor_velocity[1]) / 100.0) * math.pi / 180.0
+    # robot_velocity_2 = [0.0, 0.0]
+    # robot_velocity_2[0] = (velocity_left_2 + velocity_right_2) / 2.0
+    # robot_velocity_2[1] = (velocity_right_2 - velocity_left_2) / TREAD
+    # delta_position_left = (delta_encoder[0] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER
+    # delta_position_right = (delta_encoder[1] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER
+    # current_robot_location_2[0] = last_robot_location_2[0] + (((delta_position_left + delta_position_right) / 2) * math.cos(last_robot_location_2[2]))
+    # current_robot_location_2[1] = last_robot_location_2[1] + (((delta_position_left + delta_position_right) / 2) * math.sin(last_robot_location_2[2]))
+    # current_robot_location_2[2] = last_robot_location_2[2] + (delta_position_right - delta_position_left) / TREAD
+    # last_robot_location_2 = current_robot_location_2
 
 
 
