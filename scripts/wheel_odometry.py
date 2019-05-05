@@ -21,9 +21,9 @@ current_time = time.time()
 last_time = time.time()
 
 # constants for wheel odometry of the robot
-PULSE_PER_ROUND = 4096.0  # pulse per a round of the wheel
-WHEEL_DIAMETER = 0.1524  # wheel diameter of the robot[m] : 6 inch
-TREAD = 0.26  # tread width of the robot[m] 294mm - 34.925mm
+PULSE_PER_ROUND = 0.0  # pulse per a round of the wheel
+WHEEL_DIAMETER = 0.0  # wheel diameter of the robot[m] : 6 inch
+TREAD = 0.0  # tread width of the robot[m] 294mm - 34.925mm
 
 
 # variables for wheel odometry of the robot
@@ -54,6 +54,32 @@ BATTERY_VOLTAGE_WARN = 14200
 BATTERY_VOLTAGE_FATAL = 13900
 
 
+def set_parameters():
+    global PULSE_PER_ROUND, WHEEL_DIAMETER, TREAD
+    PULSE_PER_ROUND = rospy.get_param('pulse_per_round', 4096.0)
+    WHEEL_DIAMETER = rospy.get_param('wheel_diameter', 0.1524)
+    TREAD = rospy.get_param('tread', 0.25)
+    rospy.logwarn(
+        "if you haven't set ros parameter indicates /pulse_per_round, /wheel_diameter, and /tread, Please command '$rosparam set /***' or set them in a launch file")
+    print("")
+
+
+def set_servo_id():
+    global id
+    if rospy.has_param('~multi_servo_id'):
+        id = rospy.get_param('~multi_servo_id')
+    else:
+        rospy.logwarn(
+            "you haven't set ros parameter indicates the IDs of servos. Plsease command '$rosparam set /multi_servo_id [ID1,ID2,etc]]'")
+    try:
+        if id < 0:
+            raise Exception()
+    except:
+        rospy.logerr("value error: servo_id")
+        sys.exit(1)
+    return id
+
+
 def main_function():
     global odometry_count, current_time, last_time, current_robot_location, last_robot_location, robot_velocity, dt, current_encoder_count, last_encoder_count
     global current_robot_location_2, last_robot_location_2, robot_velocity_2, current_robot_location_q, current_robot_location_2_q
@@ -65,6 +91,8 @@ def main_function():
         'wheel_odometry', Odometry, queue_size=1)
     rospy.Subscriber('multi_servo_info', Multi_servo_info,
                      callback_get_servo_info, queue_size=1)
+    set_parameters()
+    print(PULSE_PER_ROUND)
 
     # wheel_odometry_vel = Odometry()
     wheel_odometry = Odometry()

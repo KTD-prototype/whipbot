@@ -48,9 +48,17 @@ def command_servo():
     global linear_velocity_command, angular_velocity_command, num
     multi_servo_command = Multi_servo_command()
 
-    multi_servo_command.target_torque.append(
-        -1 * linear_velocity_command * 3000)
-    multi_servo_command.target_torque.append(linear_velocity_command * 3000)
+    if linear_velocity_command >= 0:
+        command_left = -1 * linear_velocity_command * \
+            2000 + angular_velocity_command * 50
+        command_right = linear_velocity_command * 2000 + angular_velocity_command * 50
+    else:
+        command_left = -1 * linear_velocity_command * \
+            2000 - angular_velocity_command * 50
+        command_right = linear_velocity_command * 2000 - angular_velocity_command * 50
+
+    multi_servo_command.target_torque.append(command_left)
+    multi_servo_command.target_torque.append(command_right)
     pub_motor_control.publish(multi_servo_command)
     del multi_servo_command
 
