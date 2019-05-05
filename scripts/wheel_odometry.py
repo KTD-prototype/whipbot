@@ -64,22 +64,6 @@ def set_parameters():
     print("")
 
 
-def set_servo_id():
-    global id
-    if rospy.has_param('~multi_servo_id'):
-        id = rospy.get_param('~multi_servo_id')
-    else:
-        rospy.logwarn(
-            "you haven't set ros parameter indicates the IDs of servos. Plsease command '$rosparam set /multi_servo_id [ID1,ID2,etc]]'")
-    try:
-        if id < 0:
-            raise Exception()
-    except:
-        rospy.logerr("value error: servo_id")
-        sys.exit(1)
-    return id
-
-
 def main_function():
     global odometry_count, current_time, last_time, current_robot_location, last_robot_location, robot_velocity, dt, current_encoder_count, last_encoder_count
     global current_robot_location_2, last_robot_location_2, robot_velocity_2, current_robot_location_q, current_robot_location_2_q
@@ -92,7 +76,6 @@ def main_function():
     rospy.Subscriber('multi_servo_info', Multi_servo_info,
                      callback_get_servo_info, queue_size=1)
     set_parameters()
-    print(PULSE_PER_ROUND)
 
     # wheel_odometry_vel = Odometry()
     wheel_odometry = Odometry()
