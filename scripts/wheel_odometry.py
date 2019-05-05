@@ -11,6 +11,7 @@ import time
 import signal
 import sys
 import math
+import tf
 from nav_msgs.msg import Odometry
 from whipbot.msg import Posture_angle
 from kondo_b3mservo_rosdriver.msg import Multi_servo_info
@@ -34,11 +35,13 @@ velocity_right = 0.0  # velocity to ground [m/s]
 odometry_count = 0
 # current relative location from a start point : [x, y, theta]
 current_robot_location = [0.0, 0.0, 0.0]
+current_robot_location_q = [0.0, 0.0, 0.0, 0.0]
 # last relative location from a start point : [x, y, theta]
 last_robot_location = [0.0, 0.0, 0.0]
 robot_velocity = [0.0, 0.0]  # robot velocity : [linear vel, angular vel]
 dt = 0.0
 current_robot_location_2 = [0.0, 0.0, 0.0]
+current_robot_location_2_q = [0.0, 0.0, 0.0, 0.0]
 last_robot_location_2 = [0.0, 0.0, 0.0]
 robot_velocity_2 = [0.0, 0.0]
 
@@ -52,8 +55,8 @@ BATTERY_VOLTAGE_FATAL = 13900
 
 
 def main_function():
-    global odometry_count, current_time, last_time, current_robot_location, last_robot_location, robot_velocity, dt
-    global current_robot_location_2, robot_velocity_2
+    global odometry_count, current_time, last_time, current_robot_location, last_robot_location, robot_velocity, dt, current_encoder_count, last_encoder_count
+    global current_robot_location_2, last_robot_location_2, robot_velocity_2, current_robot_location_q, current_robot_location_2_q
     rospy.init_node('wheel_odometry')
 
     wheel_odometry_vel_pub = rospy.Publisher(
@@ -65,10 +68,10 @@ def main_function():
 
     wheel_odometry_vel = Odometry()
     wheel_odometry_pos = Odometry()
-    wheel_odometry_vel.header.frame_id = '1'
-    wheel_odometry_vel.child_frame_id = '1'
-    wheel_odometry_pos.header.frame_id = '1'
-    wheel_odometry_pos.child_frame_id = '1'
+    wheel_odometry_vel.header.frame_id = 'map'
+    wheel_odometry_vel.child_frame_id = 'frame'
+    wheel_odometry_pos.header.frame_id = 'map'
+    wheel_odometry_pos.child_frame_id = 'frame'
 
     rate = rospy.Rate(20)
     while not rospy.is_shutdown():
@@ -81,7 +84,10 @@ def main_function():
             wheel_odometry_vel.header.seq = odometry_count
             wheel_odometry_vel.pose.pose.position.x = current_robot_location[0]
             wheel_odometry_vel.pose.pose.position.y = current_robot_location[1]
-            wheel_odometry_vel.pose.pose.orientation.w = current_robot_location[2]
+            wheel_odometry_vel.pose.pose.orientation.x = current_robot_location_q[0]
+            wheel_odometry_vel.pose.pose.orientation.y = current_robot_location_q[1]
+            wheel_odometry_vel.pose.pose.orientation.z = current_robot_location_q[2]
+            wheel_odometry_vel.pose.pose.orientation.w = current_robot_location_q[3]
             wheel_odometry_vel.twist.twist.linear.x = robot_velocity[0]
             wheel_odometry_vel.twist.twist.angular.z = robot_velocity[1]
             wheel_odometry_vel_pub.publish(wheel_odometry_vel)
@@ -89,13 +95,17 @@ def main_function():
             wheel_odometry_pos.header.seq = odometry_count
             wheel_odometry_pos.pose.pose.position.x = current_robot_location_2[0]
             wheel_odometry_pos.pose.pose.position.y = current_robot_location_2[1]
-            wheel_odometry_pos.pose.pose.orientation.w = current_robot_location_2[2]
+            wheel_odometry_pos.pose.pose.orientation.x = current_robot_location_2_q[0]
+            wheel_odometry_pos.pose.pose.orientation.y = current_robot_location_2_q[1]
+            wheel_odometry_pos.pose.pose.orientation.z = current_robot_location_2_q[2]
+            wheel_odometry_pos.pose.pose.orientation.w = current_robot_location_2_q[3]
             wheel_odometry_pos.twist.twist.linear.x = robot_velocity_2[0]
             wheel_odometry_pos.twist.twist.angular.z = robot_velocity_2[1]
             wheel_odometry_pos_pub.publish(wheel_odometry_pos)
 
             odometry_count = odometry_count + 1
             last_robot_location = current_robot_location
+            last_robot_location_2 = current_robot_location_2
             last_encoder_count = current_encoder_count
             last_time = time.time()
 
@@ -120,7 +130,7 @@ def callback_get_servo_info(servo_info):
 
 def calculate_odometry():
     global current_robot_location, last_robot_location, robot_velocity, velocity_left, velocity_right
-    global current_encoder_count, last_encoder_count, motor_velocity, current_time, last_time, dt, current_robot_location_2, last_robot_location_2, motor_velocity
+    global current_encoder_count, last_encoder_count, motor_velocity, current_time, last_time, dt, current_robot_location_2, last_robot_location_2, robot_velocity_2, motor_velocity, current_robot_location_q, current_robot_location_2_q
     global PULSE_PER_ROUND, WHEEL_DIAMETER, TREAD
     delta_encoder = [
         x - y for (x, y) in zip(current_encoder_count, last_encoder_count)]
@@ -135,7 +145,10 @@ def calculate_odometry():
         robot_velocity[0] * math.cos(last_robot_location[2]) * dt
     current_robot_location[1] = last_robot_location[1] + \
         robot_velocity[0] * math.sin(last_robot_location[2]) * dt
-    current_robot_location[2] = last_robot_location[2] + robot_velocity[1] * dt
+    current_robot_location[2] = last_robot_location[2] + \
+        robot_velocity[1] * dt  # euler angle : yaw
+    current_robot_location_q = tf.transformations.quaternion_from_euler(
+        0, 0, current_robot_location[2])
 
     robot_velocity[0] = (velocity_left + velocity_right) / \
         2.0  # linear velocity [m/s]
@@ -143,22 +156,26 @@ def calculate_odometry():
         TREAD  # angular velocity [rad/s]
 
     # calculate process #2 : position based odometry
-    velocity_left_2 = (float(motor_velocity[0]) / 100.0) * math.pi / 180.0
-    velocity_right_2 = (float(motor_velocity[1]) / 100.0) * math.pi / 180.0
-    robot_velocity_2 = [0.0, 0.0]
+    velocity_left_2 = (
+        (float(motor_velocity[0]) / 100.0) / 360) * math.pi * WHEEL_DIAMETER
+    velocity_right_2 = (
+        (float(motor_velocity[1]) / 100.0) / 360) * math.pi * WHEEL_DIAMETER
     robot_velocity_2[0] = (velocity_left_2 + velocity_right_2) / 2.0
     robot_velocity_2[1] = (velocity_right_2 - velocity_left_2) / TREAD
     delta_position_left = (
         delta_encoder[0] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER
     delta_position_right = (
         delta_encoder[1] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER
+
     current_robot_location_2[0] = last_robot_location_2[0] + (
         ((delta_position_left + delta_position_right) / 2) * math.cos(last_robot_location_2[2]))
     current_robot_location_2[1] = last_robot_location_2[1] + (
         ((delta_position_left + delta_position_right) / 2) * math.sin(last_robot_location_2[2]))
     current_robot_location_2[2] = last_robot_location_2[2] + \
         (delta_position_right - delta_position_left) / TREAD
-    last_robot_location_2 = current_robot_location_2
+
+    current_robot_location_2_q = tf.transformations.quaternion_from_euler(
+        0, 0, current_robot_location_2[2])
 
 
 if __name__ == '__main__':
