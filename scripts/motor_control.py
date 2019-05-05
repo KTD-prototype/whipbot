@@ -13,6 +13,7 @@ import serial
 import time
 import signal
 import sys
+from std_msgs.msg import Int16
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
 from whipbot.msg import Posture_angle
@@ -22,9 +23,13 @@ from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 linear_velocity_command = 0.0
 angular_velocity_command = 0.0
 num = 0
+target_position = []
+target_velocity = []
+target_torque = []
+
 
 def callback_init(number):
-    global num
+    global num, target_position, target_velocity, target_torque
     num = number.data
     for i in range(num):
         target_position.append(0)
@@ -40,10 +45,12 @@ def callback_get_motion(whipbot_motion):
 
 
 def command_servo():
-    global vel, ang, num
+    global linear_velocity_command, angular_velocity_command, num
     multi_servo_command = Multi_servo_command()
-    for i in range(num):
-        multi_servo_command.target_torque.append(vel * 3000)
+
+    multi_servo_command.target_torque.append(
+        -1 * linear_velocity_command * 3000)
+    multi_servo_command.target_torque.append(linear_velocity_command * 3000)
     pub_motor_control.publish(multi_servo_command)
     del multi_servo_command
 

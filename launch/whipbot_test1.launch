@@ -2,6 +2,7 @@
   <node name="whipbot_main"   pkg="whipbot" type="whipbot_main.py" />
   <node name="get_sernsor" pkg="whipbot" type="get_sernsor.py" output="screen"/>
   <node name="motion_generator"   pkg="whipbot" type="motion_generator.py" output="screen"/>
+  <node name="wheel_odometry"   pkg="whipbot" type="wheel_odometry.py" output="screen"/>
   <node name="motor_control"   pkg="whipbot" type="motor_control.py"/>
 
   <node name="motor_command" pkg="kondo_b3mservo_rosdriver" type="torque_control_autodetect.py" output="screen"/>
@@ -9,4 +10,6 @@
   <node name="joy_node"   pkg="joy" type="joy_node">
     <param name="autorepeat_rate" value="10"/>
   </node>
+
+  <node name="static_transform_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map frame 100"/>
 </launch>

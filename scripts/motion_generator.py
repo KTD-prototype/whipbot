@@ -13,7 +13,8 @@ import serial
 import time
 import signal
 import tf
-import sys,math
+import sys
+import math
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
@@ -22,9 +23,9 @@ from whipbot.msg import Posture_angle
 
 
 # variables for velocity command from other nodes or joypad.
-main_lenear_vel = 0
+main_linear_vel = 0
 main_angular_vel = 0
-joy_lenear_vel = 0
+joy_linear_vel = 0
 joy_angular_vel = 0
 
 # variables for posture angle of the robot
@@ -33,16 +34,32 @@ roll = 0
 heading = 0
 
 # variables for position and velocity of the robot
-current_robot_location = [0.0, 0.0, 0.0] #current relative location from a start point : [x, y, z]
-current_robot_orientation_quaternion = [0.0, 0.0, 0.0, 0.0] #current relative orientation(quaternion) from a start point : [x, y, z, w]
-current_robot_orientation_euler = [0.0, 0.0, 0.0] #current relative orientation(quaternion) from a start point : [roll, pitch, yaw]
-last_robot_location = [0.0, 0.0, 0.0] #last relative location from a start point : [x, y, z]
+
+# current relative location from a start point : [x, y, z]
+current_robot_location = [0.0, 0.0, 0.0]
+
+# current relative orientation(quaternion) from a start point : [x, y, z, w]
+current_robot_orientation_quaternion = [0.0, 0.0, 0.0, 0.0]
+
+# current relative orientation(quaternion) from a start point : [roll, pitch, yaw]
+current_robot_orientation_euler = [0.0, 0.0, 0.0]
+
+# last relative location from a start point : [x, y, z]
+last_robot_location = [0.0, 0.0, 0.0]
 last_robot_orientation_euler = [0.0, 0.0, 0.0]
-delta_robot_location = [0.0, 0.0, 0.0] #difference fo relative location between current frame and last frame : [x, y, z]
+
+# difference fo relative location between current frame and last frame : [x, y, z]
+delta_robot_location = [0.0, 0.0, 0.0]
 delta_robot_orientation = [0.0, 0.0, 0.0]
-accumulated_error_of_robot_location = [0.0, 0.0, 0.0] #accumulated error of relative location from a start point of hovering : [x, y, z]
-accumulated_error_of_robot_orientation = [0.0, 0.0, 0.0] #accumulated error of relative location from a start point of hovering : [roll, pitch, yaw]
-robot_velocity = [0.0, 0.0] #robot velocity : [linear vel, angular vel]
+
+# accumulated error of relative location from a start point of hovering : [x, y, z]
+accumulated_error_of_robot_location = [0.0, 0.0, 0.0]
+
+# accumulated error of relative location from a start point of hovering : [roll, pitch, yaw]
+accumulated_error_of_robot_orientation = [0.0, 0.0, 0.0]
+
+robot_velocity = [0.0, 0.0]  # robot velocity : [linear vel, angular vel]
+
 
 def callback_get_posture(posture):
     global pitch, roll, heading
@@ -52,15 +69,15 @@ def callback_get_posture(posture):
 
 
 def callback_get_command_from_main(twist_command):
-    global linear_vel, angular_vel
+    global main_linear_vel, main_angular_vel
     main_linear_vel = twist_command.linear.x
     main_angular_vel = twist_command.angular.z
     # rospy.loginfo('hello')
 
 
 def callback_get_command_from_joy(joy_msg):
-    global joy_lenear_vel, joy_angular_vel
-    joy_lenear_vel = joy_msg.axes[1]
+    global joy_linear_vel, joy_angular_vel
+    joy_linear_vel = joy_msg.axes[1]
     joy_angular_vel = joy_msg.axes[3]
 
 
@@ -73,33 +90,43 @@ def callback_get_odometry(wheel_odometry):
     # current_robot_orientation_quaternion[1] = wheel_odometry.pose.pose.orientation.y
     # current_robot_orientation_quaternion[2] = wheel_odometry.pose.pose.orientation.z
     # current_robot_orientation_quaternion[3] = wheel_odometry.pose.pose.orientation.w
-    current_robot_orientation_euler = tf.transformations.euler_from_quaternion(current_robot_orientation_quaternion[0], current_robot_orientation_quaternion[1], current_robot_orientation_quaternion[2], current_robot_orientation_quaternion[3])
+    current_robot_orientation_euler = tf.transformations.euler_from_quaternion(
+        current_robot_orientation_quaternion[0], current_robot_orientation_quaternion[1], current_robot_orientation_quaternion[2], current_robot_orientation_quaternion[3])
 
 
 def generate_command():
-    global joy_lenear_vel, joy_angular_vel, main_linear_vel, main_angular_vel, current_robot_location, last_robot_location, accumulated_error_of_robot_location, accumulated_error_of_robot_orientation
+    global joy_linear_vel, joy_angular_vel, main_linear_vel, main_angular_vel, current_robot_location, last_robot_location, accumulated_error_of_robot_location, accumulated_error_of_robot_orientation
+    global last_robot_orientation_euler
 
-    if joy_lenear_vel != 0 or joy_angular_vel != 0:
-        accumulated_error_of_robot_location = [0.0, 0.0, 0.0] #reset accumulated location error during robot's hovering
-        accumulated_error_of_robot_orientation = [0.0, 0.0, 0.0] #reset accumulation
-        whipbot_motion.linear.x = joy_lenear_vel
-        whipbot_motion.angular.z = joy_angular_vel
+    if joy_linear_vel != 0 or joy_angular_vel != 0:
+        # reset accumulated location error during robot's hovering
+        accumulated_error_of_robot_location = [0.0, 0.0, 0.0]
+        accumulated_error_of_robot_orientation = [
+            0.0, 0.0, 0.0]  # reset accumulation
+        whipbot_motion.linear.x = joy_linear_vel * 0.4  # [m/s]
+        whipbot_motion.angular.z = joy_angular_vel * 2.0  # [rad/s]
         pub_motion_control.publish(whipbot_motion)
 
     elif main_linear_vel != 0 or main_angular_vel != 0:
-        accumulated_error_of_robot_location = [0.0, 0.0, 0.0] #reset accumulated location error during robot's hovering
-        accumulated_error_of_robot_orientation = [0.0, 0.0, 0.0] #reset accumulation
+        # reset accumulated location error during robot's hovering
+        accumulated_error_of_robot_location = [0.0, 0.0, 0.0]
+        accumulated_error_of_robot_orientation = [
+            0.0, 0.0, 0.0]  # reset accumulation
         whipbot_motion.linear.x = main_linear_vel
         whipbot_motion.angular.z = main_angular_vel
         pub_motion_control.publish(whipbot_motion)
 
     else:
         for i in range(3):
-            delta_robot_location[i] = current_robot_location[i] - last_robot_location[i]
-            accumulated_error_of_robot_location[i] = accumulated_error_of_robot_location[i] + delta_robot_location[i]
+            delta_robot_location[i] = current_robot_location[i] - \
+                last_robot_location[i]
+            accumulated_error_of_robot_location[i] = accumulated_error_of_robot_location[i] + \
+                delta_robot_location[i]
 
-            delta_robot_orientation[i] = current_robot_orientation_euler[i] - last_robot_orientation_euler[i]
-            accumulated_error_of_robot_orientation[i] = accumulated_error_of_robot_orientation[i] + delta_robot_orientation[i]
+            delta_robot_orientation[i] = current_robot_orientation_euler[i] - \
+                last_robot_orientation_euler[i]
+            accumulated_error_of_robot_orientation[i] = accumulated_error_of_robot_orientation[i] + \
+                delta_robot_orientation[i]
 
         hovering_linear_vel = 0
         hovering_angular_vel = 0
@@ -108,6 +135,7 @@ def generate_command():
         pub_motion_control.publish(whipbot_motion)
         last_robot_location = current_robot_location
         last_robot_orientation_euler = current_robot_orientation_euler
+
 
 if __name__ == '__main__':
     rospy.init_node('motion_generator')
@@ -120,7 +148,8 @@ if __name__ == '__main__':
     rospy.Subscriber('posture_angle', Posture_angle,
                      callback_get_posture, queue_size=1)
     rospy.Subscriber('joy', Joy, callback_get_command_from_joy, queue_size=5)
-    rospy.Subscriber('main_command', Twist, callback_get_command_from_main, queue_size=5)
+    rospy.Subscriber('main_command', Twist,
+                     callback_get_command_from_main, queue_size=5)
 
     whipbot_motion = Twist()
     rate = rospy.Rate(50)
