@@ -12,6 +12,7 @@ import rospy
 import serial
 import time
 import signal
+import tf
 import sys,math
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Twist
@@ -33,6 +34,8 @@ heading = 0
 
 # variables for position and velocity of the robot
 current_robot_location = [0.0, 0.0, 0.0] #current relative location from a start point : [x, y, theta]
+current_robot_orientation_quaternion = [0.0, 0.0, 0.0, 0.0] #current relative orientation(quaternion) from a start point : [x, y, z, w]
+current_robot_orientation_euler = [0.0, 0.0, 0.0] #current relative orientation(quaternion) from a start point : [roll, pitch, yaw]
 last_robot_location = [0.0, 0.0, 0.0] #last relative location from a start point : [x, y, theta]
 delta_robot_location = [0.0, 0.0, 0.0] #difference fo relative location between current frame and last frame : [x, y, theta]
 accumulated_error_of_robot_location = [0.0, 0.0, 0.0] #accumulated error of relative location from a start point of hovering : [x, y, theta]
@@ -59,9 +62,15 @@ def callback_get_command_from_joy(joy_msg):
 
 
 def callback_get_odometry(wheel_odometry):
-    current_robot_location[0] = wheel_odometry.pose.pose.position.x
-    current_robot_location[1] = wheel_odometry.pose.pose.position.y
-    current_robot_location[2] = wheel_odometry.pose.pose.orientation.w
+    current_robot_location = wheel_odometry.pose.pose.position
+    # current_robot_location[0] = wheel_odometry.pose.pose.position.x
+    # current_robot_location[1] = wheel_odometry.pose.pose.position.y
+    current_robot_orientation_quaternion = wheel_odometry.pose.pose.orientation
+    # current_robot_orientation_quaternion[0] = wheel_odometry.pose.pose.orientation.x
+    # current_robot_orientation_quaternion[1] = wheel_odometry.pose.pose.orientation.y
+    # current_robot_orientation_quaternion[2] = wheel_odometry.pose.pose.orientation.z
+    # current_robot_orientation_quaternion[3] = wheel_odometry.pose.pose.orientation.w
+    current_robot_orientation_euler = tf.transformations.euler_from_quaternion(current_robot_orientation_quaternion[0], current_robot_orientation_quaternion[1], current_robot_orientation_quaternion[2], current_robot_orientation_quaternion[3])
 
 
 def generate_command():
