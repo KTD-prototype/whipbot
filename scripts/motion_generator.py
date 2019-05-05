@@ -33,12 +33,15 @@ roll = 0
 heading = 0
 
 # variables for position and velocity of the robot
-current_robot_location = [0.0, 0.0, 0.0] #current relative location from a start point : [x, y, theta]
+current_robot_location = [0.0, 0.0, 0.0] #current relative location from a start point : [x, y, z]
 current_robot_orientation_quaternion = [0.0, 0.0, 0.0, 0.0] #current relative orientation(quaternion) from a start point : [x, y, z, w]
 current_robot_orientation_euler = [0.0, 0.0, 0.0] #current relative orientation(quaternion) from a start point : [roll, pitch, yaw]
-last_robot_location = [0.0, 0.0, 0.0] #last relative location from a start point : [x, y, theta]
-delta_robot_location = [0.0, 0.0, 0.0] #difference fo relative location between current frame and last frame : [x, y, theta]
-accumulated_error_of_robot_location = [0.0, 0.0, 0.0] #accumulated error of relative location from a start point of hovering : [x, y, theta]
+last_robot_location = [0.0, 0.0, 0.0] #last relative location from a start point : [x, y, z]
+last_robot_orientation_euler = [0.0, 0.0, 0.0]
+delta_robot_location = [0.0, 0.0, 0.0] #difference fo relative location between current frame and last frame : [x, y, z]
+delta_robot_orientation = [0.0, 0.0, 0.0]
+accumulated_error_of_robot_location = [0.0, 0.0, 0.0] #accumulated error of relative location from a start point of hovering : [x, y, z]
+accumulated_error_of_robot_orientation = [0.0, 0.0, 0.0] #accumulated error of relative location from a start point of hovering : [roll, pitch, yaw]
 robot_velocity = [0.0, 0.0] #robot velocity : [linear vel, angular vel]
 
 def callback_get_posture(posture):
@@ -74,16 +77,18 @@ def callback_get_odometry(wheel_odometry):
 
 
 def generate_command():
-    global joy_lenear_vel, joy_angular_vel, main_linear_vel, main_angular_vel, current_robot_location, last_robot_location, accumulated_error_of_robot_location
+    global joy_lenear_vel, joy_angular_vel, main_linear_vel, main_angular_vel, current_robot_location, last_robot_location, accumulated_error_of_robot_location, accumulated_error_of_robot_orientation
 
     if joy_lenear_vel != 0 or joy_angular_vel != 0:
         accumulated_error_of_robot_location = [0.0, 0.0, 0.0] #reset accumulated location error during robot's hovering
+        accumulated_error_of_robot_orientation = [0.0, 0.0, 0.0] #reset accumulation
         whipbot_motion.linear.x = joy_lenear_vel
         whipbot_motion.angular.z = joy_angular_vel
         pub_motion_control.publish(whipbot_motion)
 
     elif main_linear_vel != 0 or main_angular_vel != 0:
         accumulated_error_of_robot_location = [0.0, 0.0, 0.0] #reset accumulated location error during robot's hovering
+        accumulated_error_of_robot_orientation = [0.0, 0.0, 0.0] #reset accumulation
         whipbot_motion.linear.x = main_linear_vel
         whipbot_motion.angular.z = main_angular_vel
         pub_motion_control.publish(whipbot_motion)
@@ -92,12 +97,17 @@ def generate_command():
         for i in range(3):
             delta_robot_location[i] = current_robot_location[i] - last_robot_location[i]
             accumulated_error_of_robot_location[i] = accumulated_error_of_robot_location[i] + delta_robot_location[i]
+
+            delta_robot_orientation[i] = current_robot_orientation_euler[i] - last_robot_orientation_euler[i]
+            accumulated_error_of_robot_orientation[i] = accumulated_error_of_robot_orientation[i] + delta_robot_orientation[i]
+
         hovering_linear_vel = 0
         hovering_angular_vel = 0
         whipbot_motion.linear.x = hovering_linear_vel
         whipbot_motion.angular.z = hovering_angular_vel
         pub_motion_control.publish(whipbot_motion)
         last_robot_location = current_robot_location
+        last_robot_orientation_euler = current_robot_orientation_euler
 
 if __name__ == '__main__':
     rospy.init_node('motion_generator')
