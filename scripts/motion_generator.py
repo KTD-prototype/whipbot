@@ -15,11 +15,11 @@ import signal
 import tf
 import sys
 import math
-from sensor_msgs.msg import Imu
+# from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 from nav_msgs.msg import Odometry
-from whipbot.msg import Posture_angle
+# from whipbot.msg import Posture_angle
 
 
 # variables for velocity command from other nodes or joypad.
@@ -61,11 +61,11 @@ accumulated_error_of_robot_orientation = [0.0, 0.0, 0.0]
 robot_velocity = [0.0, 0.0]  # robot velocity : [linear vel, angular vel]
 
 
-def callback_get_posture(posture):
-    global pitch, roll, heading
-    roll = posture.roll
-    pitch = posture.pitch
-    heading = posture.heading
+# def callback_get_posture(posture):
+#     global pitch, roll, heading
+#     roll = posture.roll
+#     pitch = posture.pitch
+#     heading = posture.heading
 
 
 def callback_get_command_from_main(twist_command):
@@ -145,8 +145,8 @@ if __name__ == '__main__':
 
     rospy.Subscriber('wheel_odometry', Odometry,
                      callback_get_odometry, queue_size=1)
-    rospy.Subscriber('posture_angle', Posture_angle,
-                     callback_get_posture, queue_size=1)
+    # rospy.Subscriber('posture_angle', Posture_angle,
+    #                  callback_get_posture, queue_size=1)
     rospy.Subscriber('joy', Joy, callback_get_command_from_joy, queue_size=5)
     rospy.Subscriber('main_command', Twist,
                      callback_get_command_from_main, queue_size=5)
