@@ -36,7 +36,7 @@ target_position = [0, 0]  # not used
 target_velocity = [0, 0]  # not used
 target_torque = [0, 0]  # [command_left, command_right]
 
-PID_GAIN = [400.0, 0.0, 70.0]  # [P gain, I gain, D gain]
+PID_GAIN = [800.0, 0.0, 300.0]  # [P gain, I gain, D gain]
 balancing_angle = - 1.0
 
 
@@ -94,7 +94,7 @@ def posture_control():
     # calculate target_torque based on posture and angular velocity
     target_torque[1] = PID_GAIN[0] * -1 * \
         (posture_angle[1] - balancing_angle) + PID_GAIN[2] * gyro_rate[1]
-    target_torque[0] = -1 * target_torque[1] * 1.01
+    target_torque[0] = -1 * target_torque[1]
 
 
 def servo_command():
@@ -102,6 +102,10 @@ def servo_command():
     multi_servo_command = Multi_servo_command()
     for i in range(2):
         target_torque[i] = int(target_torque[i])
+        if target_torque[i] > 32000:
+            target_torque[i] = 32000
+        elif target_torque[i] < -32000:
+            target_torque[i] = -32000
         multi_servo_command.target_torque.append(target_torque[i])
     # rospy.logwarn(multi_servo_command)
     pub_motor_control.publish(multi_servo_command)

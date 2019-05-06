@@ -27,8 +27,9 @@ TREAD = 0.0  # tread width of the robot[m] 294mm - 34.925mm
 
 
 # variables for wheel odometry of the robot
-current_encoder_count = [0.0, 0.0]
-last_encoder_count = [0.0, 0.0]
+current_encoder_count = [0, 0]
+last_encoder_count = [0, 0]
+delta_encoder = [0, 0]
 motor_velocity = [0.0, 0.0]
 velocity_left = 0.0  # velocity to ground [m/s]
 velocity_right = 0.0  # velocity to ground [m/s]
@@ -39,11 +40,13 @@ current_robot_location_q = [0.0, 0.0, 0.0, 0.0]
 # last relative location from a start point : [x, y, theta]
 last_robot_location = [0.0, 0.0, 0.0]
 robot_velocity = [0.0, 0.0]  # robot velocity : [linear vel, angular vel]
-dt = 0.0
+dt = 1.0
 current_robot_location_2 = [0.0, 0.0, 0.0]
 current_robot_location_2_q = [0.0, 0.0, 0.0, 0.0]
 last_robot_location_2 = [0.0, 0.0, 0.0]
 robot_velocity_2 = [0.0, 0.0]
+last_robot_velocity_2 = [0.0, 0.0]
+normalized_robot_velocity_2 = [0.0, 0.0]
 
 # variables and constants to watch battery boltage
 battery_voltage_warn_flag = 0
@@ -65,8 +68,8 @@ def set_parameters():
 
 
 def main_function():
-    global odometry_count, current_time, last_time, current_robot_location, last_robot_location, robot_velocity, dt, current_encoder_count, last_encoder_count
-    global current_robot_location_2, last_robot_location_2, robot_velocity_2, current_robot_location_q, current_robot_location_2_q
+    global odometry_count, current_robot_location, last_robot_location, robot_velocity, dt, current_encoder_count, last_encoder_count
+    global current_robot_location_2, last_robot_location_2, robot_velocity_2, current_robot_location_q, current_robot_location_2_q, normalized_robot_velocity_2
     rospy.init_node('wheel_odometry')
 
     # wheel_odometry_vel_pub = rospy.Publisher(
@@ -84,12 +87,9 @@ def main_function():
     wheel_odometry.header.frame_id = 'map'
     wheel_odometry.child_frame_id = 'frame'
 
-    rate = rospy.Rate(20)
+    rate = rospy.Rate(40)
     while not rospy.is_shutdown():
         try:
-            current_time = time.time()
-            dt = current_time - last_time
-
             calculate_odometry()
 
             # wheel_odometry_vel.header.seq = odometry_count
@@ -110,15 +110,13 @@ def main_function():
             wheel_odometry.pose.pose.orientation.y = current_robot_location_2_q[1]
             wheel_odometry.pose.pose.orientation.z = current_robot_location_2_q[2]
             wheel_odometry.pose.pose.orientation.w = current_robot_location_2_q[3]
-            wheel_odometry.twist.twist.linear.x = robot_velocity_2[0]
-            wheel_odometry.twist.twist.angular.z = robot_velocity_2[1]
+            wheel_odometry.twist.twist.linear.x = normalized_robot_velocity_2[0]
+            wheel_odometry.twist.twist.angular.z = normalized_robot_velocity_2[1]
             wheel_odometry_pub.publish(wheel_odometry)
 
             odometry_count = odometry_count + 1
             last_robot_location = current_robot_location
             last_robot_location_2 = current_robot_location_2
-            last_encoder_count = current_encoder_count
-            last_time = time.time()
 
         except IOError:
             pass
@@ -127,10 +125,18 @@ def main_function():
 
 
 def callback_get_servo_info(servo_info):
-    global battery_voltage_warn_flag, battery_voltage_fatal_flag, current_encoder_count, motor_velocity
+    global battery_voltage_warn_flag, battery_voltage_fatal_flag, current_encoder_count, last_encoder_count, motor_velocity
+    global dt, delta_encoder, current_time, last_time
     current_encoder_count = servo_info.encoder_count
     battery_voltage = servo_info.input_voltage
     motor_velocity = servo_info.motor_velocity
+
+    current_time = time.time()
+    dt = current_time - last_time
+    delta_encoder = [
+        x - y for (x, y) in zip(current_encoder_count, last_encoder_count)]
+    last_encoder_count = current_encoder_count
+    last_time = time.time()
 
     if battery_voltage[0] < BATTERY_VOLTAGE_WARN and battery_voltage_warn_flag == 0:
         rospy.logwarn('battery voltage is low !')
@@ -141,10 +147,9 @@ def callback_get_servo_info(servo_info):
 
 def calculate_odometry():
     global current_robot_location, last_robot_location, robot_velocity, velocity_left, velocity_right
-    global current_encoder_count, last_encoder_count, motor_velocity, current_time, last_time, dt, current_robot_location_2, last_robot_location_2, robot_velocity_2, motor_velocity, current_robot_location_q, current_robot_location_2_q
+    global motor_velocity, dt, current_robot_location_2, last_robot_location_2, robot_velocity_2, motor_velocity, current_robot_location_q, current_robot_location_2_q
     global PULSE_PER_ROUND, WHEEL_DIAMETER, TREAD
-    delta_encoder = [
-        x - y for (x, y) in zip(current_encoder_count, last_encoder_count)]
+    global last_robot_velocity_2, normalized_robot_velocity_2, delta_encoder
 
     # calculate process #1 : velocity based odometry
     # velocity_left = (
@@ -167,12 +172,21 @@ def calculate_odometry():
     #     TREAD  # angular velocity [rad/s]
 
     # calculate process #2 : position based odometry
+    # velocity_left_2 = (
+    #     (-1 * motor_velocity[0] / 100.0) / 360) * math.pi * WHEEL_DIAMETER
+    # velocity_right_2 = (
+    #     (motor_velocity[1] / 100.0) / 360) * math.pi * WHEEL_DIAMETER
     velocity_left_2 = (
-        (-1 * motor_velocity[0] / 100.0) / 360) * math.pi * WHEEL_DIAMETER
+        (-1 * delta_encoder[0] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
     velocity_right_2 = (
-        (motor_velocity[1] / 100.0) / 360) * math.pi * WHEEL_DIAMETER
+        (delta_encoder[1] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
     robot_velocity_2[0] = (velocity_left_2 + velocity_right_2) / 2.0
     robot_velocity_2[1] = (velocity_right_2 - velocity_left_2) / TREAD
+
+    for i in range(2):
+        normalized_robot_velocity_2[i] = (
+            robot_velocity_2[i] + last_robot_velocity_2[i]) / 2.0
+
     delta_position_left = (
         -1 * delta_encoder[0] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER
     delta_position_right = (
@@ -187,6 +201,8 @@ def calculate_odometry():
 
     current_robot_location_2_q = tf.transformations.quaternion_from_euler(
         0, 0, current_robot_location_2[2])
+
+    last_robot_velocity_2 = robot_velocity_2
 
 
 if __name__ == '__main__':
