@@ -59,8 +59,8 @@ def get_data():
 
 if __name__ == '__main__':
     rospy.init_node('get_sernsor')
-    posture_angle_pub = rospy.Publisher(
-        'posture_angle', Posture_angle, queue_size=1)
+    # posture_angle_pub = rospy.Publisher(
+    #     'posture_angle', Posture_angle, queue_size=1)
     imu_pub = rospy.Publisher('/imu', Imu, queue_size=1)
 
     posture = Posture_angle()

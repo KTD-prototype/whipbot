@@ -103,18 +103,18 @@ def generate_command():
         accumulated_error_of_robot_location = [0.0, 0.0, 0.0]
         accumulated_error_of_robot_orientation = [
             0.0, 0.0, 0.0]  # reset accumulation
-        whipbot_motion.linear.x = joy_linear_vel * 0.4  # [m/s]
-        whipbot_motion.angular.z = joy_angular_vel * 2.0  # [rad/s]
-        pub_motion_control.publish(whipbot_motion)
+        whipbot_motion_command.linear.x = joy_linear_vel * 0.4  # [m/s]
+        whipbot_motion_command.angular.z = joy_angular_vel * 2.0  # [rad/s]
+        pub_motion_control.publish(whipbot_motion_command)
 
     elif main_linear_vel != 0 or main_angular_vel != 0:
         # reset accumulated location error during robot's hovering
         accumulated_error_of_robot_location = [0.0, 0.0, 0.0]
         accumulated_error_of_robot_orientation = [
             0.0, 0.0, 0.0]  # reset accumulation
-        whipbot_motion.linear.x = main_linear_vel
-        whipbot_motion.angular.z = main_angular_vel
-        pub_motion_control.publish(whipbot_motion)
+        whipbot_motion_command.linear.x = main_linear_vel
+        whipbot_motion_command.angular.z = main_angular_vel
+        pub_motion_control.publish(whipbot_motion_command)
 
     else:
         for i in range(3):
@@ -130,9 +130,9 @@ def generate_command():
 
         hovering_linear_vel = 0
         hovering_angular_vel = 0
-        whipbot_motion.linear.x = hovering_linear_vel
-        whipbot_motion.angular.z = hovering_angular_vel
-        pub_motion_control.publish(whipbot_motion)
+        whipbot_motion_command.linear.x = hovering_linear_vel
+        whipbot_motion_command.angular.z = hovering_angular_vel
+        pub_motion_control.publish(whipbot_motion_command)
         last_robot_location = current_robot_location
         last_robot_orientation_euler = current_robot_orientation_euler
 
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     rospy.init_node('motion_generator')
 
     pub_motion_control = rospy.Publisher(
-        'whipbot_motion', Twist, queue_size=1)
+        'whipbot_motion_command', Twist, queue_size=1)
 
     rospy.Subscriber('wheel_odometry', Odometry,
                      callback_get_odometry, queue_size=1)
@@ -151,7 +151,7 @@ if __name__ == '__main__':
     rospy.Subscriber('main_command', Twist,
                      callback_get_command_from_main, queue_size=5)
 
-    whipbot_motion = Twist()
+    whipbot_motion_command = Twist()
     rate = rospy.Rate(50)
     while not rospy.is_shutdown():
         try:

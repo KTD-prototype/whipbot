@@ -16,7 +16,7 @@ import sys
 from std_msgs.msg import Int16
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
-from whipbot.msg import Posture_angle
+# from whipbot.msg import Posture_angle
 from kondo_b3mservo_rosdriver.msg import Multi_servo_command
 from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
@@ -68,8 +68,8 @@ if __name__ == '__main__':
 
     pub_motor_control = rospy.Publisher(
         'multi_servo_command', Multi_servo_command, queue_size=1)
-
+    rospy.Subscriber('/imu', Imu, callback_get_motion, queue_size=1)
     rospy.Subscriber('the_number_of_servo', Int16, callback_init, queue_size=1)
-    rospy.Subscriber('whipbot_motion', Twist,
+    rospy.Subscriber('whipbot_motion_command', Twist,
                      callback_get_motion, queue_size=1)
     rospy.spin()
