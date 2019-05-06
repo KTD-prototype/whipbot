@@ -65,6 +65,7 @@ if __name__ == '__main__':
 
     # posture = Posture_angle()
     imu_data = Imu()
+    imu_data.header.frame_id = 'map'
     # you should wait for a while until your arduino is ready
     time.sleep(5)
 

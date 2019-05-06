@@ -14,6 +14,7 @@ import time
 import signal
 import sys
 import tf
+import math
 from std_msgs.msg import Int16
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
@@ -24,24 +25,24 @@ from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 linear_velocity_command = 0.0
 angular_velocity_command = 0.0
 
+# motion of the whipbot
+# leaning forward : pitch value is negative, gyro_rate for pitch is positive
 posture_angle = [0.0, 0.0, 0.0]  # roll, pitch, yaw
 accel = [0.0, 0.0, 0.0]  # x, y, z
 gyro_rate = [0.0, 0.0, 0.0]  # roll, pitch, yaw
 
 num = 0
-target_position = []
-target_velocity = []
-target_torque = []
+target_position = [0, 0]  # not used
+target_velocity = [0, 0]  # not used
+target_torque = [0, 0]  # [command_left, command_right]
+
+PID_GAIN = [400.0, 0.0, 70.0]  # [P gain, I gain, D gain]
+balancing_angle = - 1.0
 
 
 def callback_init(number):
     global num, target_position, target_velocity, target_torque
     num = number.data
-    for i in range(num):
-        target_position.append(0)
-        target_velocity.append(0)
-        target_torque.append(0)
-    # print(num)
 
 
 def callback_get_motion(imu_data):
@@ -52,38 +53,57 @@ def callback_get_motion(imu_data):
                                 imu_data.orientation.w)
     posture_angle = tf.transformations.euler_from_quaternion(
         posture_angle_quaternion)
+    posture_angle = list(posture_angle)
+    for i in range(3):
+        posture_angle[i] = posture_angle[i] * 180.0 / math.pi
+
     accel = (imu_data.linear_acceleration.x,
              imu_data.linear_acceleration.y,
              imu_data.linear_acceleration.z)
     gyro_rate = (imu_data.angular_velocity.x,
                  imu_data.angular_velocity.y,
                  imu_data.angular_velocity.z)
+
     # rospy.logwarn(posture_angle)
-    # print("test")
 
 
 def callback_get_motion_command(whipbot_motion_command):
     global linear_velocity_command, angular_velocity_command
     linear_velocity_command = whipbot_motion_command.linear.x
     angular_velocity_command = whipbot_motion_command.angular.z
-    command_servo()
+    velocity_control()
 
 
-def command_servo():
-    global linear_velocity_command, angular_velocity_command, num
-    multi_servo_command = Multi_servo_command()
-
+def velocity_control():
+    global linear_velocity_command, angular_velocity_command, num, target_torque
     if linear_velocity_command >= 0:
-        command_left = -1 * linear_velocity_command * \
-            2000 + angular_velocity_command * 50
-        command_right = linear_velocity_command * 2000 + angular_velocity_command * 50
+        target_torque[0] = target_torque[0] + (-1) * linear_velocity_command * \
+            1000 + angular_velocity_command * 30
+        target_torque[1] = target_torque[1] + linear_velocity_command * \
+            1000 + angular_velocity_command * 30
     else:
-        command_left = -1 * linear_velocity_command * \
-            2000 - angular_velocity_command * 50
-        command_right = linear_velocity_command * 2000 - angular_velocity_command * 50
+        target_torque[0] = target_torque[0] + (-1) * linear_velocity_command * \
+            1000 - angular_velocity_command * 30
+        target_torque[1] = target_torque[1] + linear_velocity_command * \
+            1000 - angular_velocity_command * 30
 
-    multi_servo_command.target_torque.append(command_left)
-    multi_servo_command.target_torque.append(command_right)
+
+def posture_control():
+    global posture_angle, gyro_rate, target_torque
+
+    # calculate target_torque based on posture and angular velocity
+    target_torque[1] = PID_GAIN[0] * -1 * \
+        (posture_angle[1] - balancing_angle) + PID_GAIN[2] * gyro_rate[1]
+    target_torque[0] = -1 * target_torque[1] * 1.01
+
+
+def servo_command():
+    global target_torque
+    multi_servo_command = Multi_servo_command()
+    for i in range(2):
+        target_torque[i] = int(target_torque[i])
+        multi_servo_command.target_torque.append(target_torque[i])
+    # rospy.logwarn(multi_servo_command)
     pub_motor_control.publish(multi_servo_command)
     del multi_servo_command
 
@@ -98,4 +118,10 @@ if __name__ == '__main__':
     rospy.Subscriber('whipbot_motion_command', Twist,
                      callback_get_motion_command, queue_size=1)
 
-    rospy.spin()
+    while not rospy.is_shutdown():
+        try:
+            posture_control()
+            velocity_control()
+            servo_command()
+        except IOError:
+            pass
