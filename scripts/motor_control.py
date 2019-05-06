@@ -22,6 +22,11 @@ from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
 linear_velocity_command = 0.0
 angular_velocity_command = 0.0
+
+posture_angle = [0.0, 0.0, 0.0]  # roll, pitch, yaw
+accel = [0.0, 0.0, 0.0]  # x, y, z
+gyro_rate = [0.0, 0.0, 0.0]  # roll, pitch, yaw
+
 num = 0
 target_position = []
 target_velocity = []
@@ -37,10 +42,26 @@ def callback_init(number):
         target_torque.append(0)
 
 
-def callback_get_motion(whipbot_motion):
+def callback_get_motion(imu_data):
+    global posture_angle, accel, gyro_rate
+    posture_angle_quaternion = (imu_data.orientation.x,
+                                imu_data.orientation.y,
+                                imu_data.orientation.z,
+                                imu_data.orientation.w)
+    posture_angle = tf.transformations.euler_from_quaternion(
+        posture_angle_quaternion)
+    accel = (imu_data.linear_acceleration.x,
+             imu_data.linear_acceleration.y,
+             imu_data.linear_acceleration.z)
+    gyro_rate = (imu_data.angular_velocity.x,
+                 imu_data.angular_velocity.y,
+                 imu_data.angular_velocity.z)
+
+
+def callback_get_motion_command(whipbot_motion_command):
     global linear_velocity_command, angular_velocity_command
-    linear_velocity_command = whipbot_motion.linear.x
-    angular_velocity_command = whipbot_motion.angular.z
+    linear_velocity_command = whipbot_motion_command.linear.x
+    angular_velocity_command = whipbot_motion_command.angular.z
     command_servo()
 
 
@@ -71,5 +92,5 @@ if __name__ == '__main__':
     rospy.Subscriber('/imu', Imu, callback_get_motion, queue_size=1)
     rospy.Subscriber('the_number_of_servo', Int16, callback_init, queue_size=1)
     rospy.Subscriber('whipbot_motion_command', Twist,
-                     callback_get_motion, queue_size=1)
+                     callback_get_motion_command, queue_size=1)
     rospy.spin()

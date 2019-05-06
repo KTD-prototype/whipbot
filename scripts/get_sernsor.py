@@ -63,7 +63,7 @@ if __name__ == '__main__':
     #     'posture_angle', Posture_angle, queue_size=1)
     imu_pub = rospy.Publisher('/imu', Imu, queue_size=1)
 
-    posture = Posture_angle()
+    # posture = Posture_angle()
     imu_data = Imu()
     # you should wait for a while until your arduino is ready
     time.sleep(5)
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         try:
             get_data()
-            posture_angle_pub.publish(posture)
+            # posture_angle_pub.publish(posture)
             imu_pub.publish(imu_data)
 
             # for debug(monitor loop rate)
