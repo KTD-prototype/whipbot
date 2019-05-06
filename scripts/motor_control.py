@@ -13,6 +13,7 @@ import serial
 import time
 import signal
 import sys
+import tf
 from std_msgs.msg import Int16
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
@@ -40,6 +41,7 @@ def callback_init(number):
         target_position.append(0)
         target_velocity.append(0)
         target_torque.append(0)
+    # print(num)
 
 
 def callback_get_motion(imu_data):
@@ -56,6 +58,8 @@ def callback_get_motion(imu_data):
     gyro_rate = (imu_data.angular_velocity.x,
                  imu_data.angular_velocity.y,
                  imu_data.angular_velocity.z)
+    # rospy.logwarn(posture_angle)
+    # print("test")
 
 
 def callback_get_motion_command(whipbot_motion_command):
@@ -89,8 +93,9 @@ if __name__ == '__main__':
 
     pub_motor_control = rospy.Publisher(
         'multi_servo_command', Multi_servo_command, queue_size=1)
-    rospy.Subscriber('/imu', Imu, callback_get_motion, queue_size=1)
+    rospy.Subscriber('imu', Imu, callback_get_motion, queue_size=1)
     rospy.Subscriber('the_number_of_servo', Int16, callback_init, queue_size=1)
     rospy.Subscriber('whipbot_motion_command', Twist,
                      callback_get_motion_command, queue_size=1)
+
     rospy.spin()
