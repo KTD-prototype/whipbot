@@ -13,7 +13,8 @@ import serial
 import time
 import signal
 import sys
-from whipbot.msg import Posture_angle
+import tf
+import math
 from sensor_msgs.msg import Imu
 
 ser = serial.Serial('/dev/Lambda', 115200)
@@ -38,10 +39,16 @@ def get_data():
         data[i] = data[i].replace('\r\n', '')
         data[i] = float(data[i])
 
-    posture.roll = data[0]
-    posture.pitch = data[1]
-    posture.heading = data[2]
-
+    # transform posture angle[deg] to [radian]
+    for i in range(3):
+        data[i] = data[i] * math.pi / 180.0
+    posture_angle_quaternion = tf.transformations.quaternion_from_euler(
+        data[0], data[1], data[2])
+    # print(posture_angle_quaternion)
+    imu_data.orientation.x = posture_angle_quaternion[0]
+    imu_data.orientation.y = posture_angle_quaternion[1]
+    imu_data.orientation.z = posture_angle_quaternion[2]
+    imu_data.orientation.w = posture_angle_quaternion[3]
     imu_data.linear_acceleration.x = data[3]
     imu_data.linear_acceleration.y = data[4]
     imu_data.linear_acceleration.z = data[5]
@@ -61,8 +68,8 @@ if __name__ == '__main__':
     # you should wait for a while until your arduino is ready
     time.sleep(5)
 
-    # set the loop rate at 60Hz (higher is better, but it looks 60Hz is MAXIMUM for my environment)
-    rate = rospy.Rate(60)
+    # set the loop rate at 50Hz (higher is better, but it looks 60Hz is MAXIMUM for my environment)
+    rate = rospy.Rate(50)
 
     while not rospy.is_shutdown():
         try:
