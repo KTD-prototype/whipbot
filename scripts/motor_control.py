@@ -36,8 +36,8 @@ target_position = [0, 0]  # not used
 target_velocity = [0, 0]  # not used
 target_torque = [0, 0]  # [command_left, command_right]
 
-PID_GAIN = [800.0, 0.0, 300.0]  # [P gain, I gain, D gain]
-balancing_angle = - 1.0
+PID_GAIN = [500.0, 0.0, 500.0]  # [P gain, I gain, D gain]
+balancing_angle = - 0.5
 
 
 def callback_init(number):

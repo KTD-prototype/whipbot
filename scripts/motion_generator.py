@@ -78,7 +78,7 @@ def callback_get_command_from_main(twist_command):
 def callback_get_command_from_joy(joy_msg):
     global joy_linear_vel, joy_angular_vel
     joy_linear_vel = joy_msg.axes[1]
-    joy_angular_vel = joy_msg.axes[3]
+    joy_angular_vel = joy_msg.axes[0]
 
 
 def callback_get_odometry(wheel_odometry):

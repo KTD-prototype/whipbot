@@ -9,7 +9,7 @@
   <node name="wheel_odometry"   pkg="whipbot" type="wheel_odometry.py" output="screen"/>
   <node name="motor_control"   pkg="whipbot" type="motor_control.py"/>
 
-  <node name="motor_command" pkg="kondo_b3mservo_rosdriver" type="torque_control_autodetect.py" output="screen"/>
+  <node name="motor_command" pkg="kondo_b3mservo_rosdriver" type="torque_control_autodetect_multicast.py" output="screen"/>
 
   <node name="joy_node"   pkg="joy" type="joy_node">
     <param name="autorepeat_rate" value="50"/>
