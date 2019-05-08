@@ -36,8 +36,8 @@ target_position = [0, 0]  # not used
 target_velocity = [0, 0]  # not used
 target_torque = [0, 0]  # [command_left, command_right]
 
-PID_GAIN = [500.0, 0.0, 500.0]  # [P gain, I gain, D gain]
-balancing_angle = - 0.5
+PID_GAIN = [400.0, 0.0, 25.0]  # [P gain, I gain, D gain]
+balancing_angle = - 0.0
 
 
 def callback_init(number):
@@ -122,6 +122,7 @@ if __name__ == '__main__':
     rospy.Subscriber('whipbot_motion_command', Twist,
                      callback_get_motion_command, queue_size=1)
 
+    rate = rospy.Rate(50)
     while not rospy.is_shutdown():
         try:
             posture_control()
@@ -129,3 +130,4 @@ if __name__ == '__main__':
             servo_command()
         except IOError:
             pass
+        rate.sleep()
