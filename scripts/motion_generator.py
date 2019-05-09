@@ -16,6 +16,7 @@ import tf
 import sys
 import math
 # from sensor_msgs.msg import Imu
+from std_msgs.msg import Int8
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 from nav_msgs.msg import Odometry
@@ -79,6 +80,10 @@ def callback_get_command_from_joy(joy_msg):
     global joy_linear_vel, joy_angular_vel
     joy_linear_vel = joy_msg.axes[1]
     joy_angular_vel = joy_msg.axes[0]
+    reset_flag = joy_msg.buttons[0]
+    drive_flag = joy_msg.buttons[1]
+    pub_reset_trigger.publish(reset_flag)
+    pub_drive_trigger.publish(drive_flag)
 
 
 def callback_get_odometry(wheel_odometry):
@@ -142,6 +147,8 @@ if __name__ == '__main__':
 
     pub_motion_control = rospy.Publisher(
         'whipbot_motion_command', Twist, queue_size=1)
+    pub_reset_trigger = rospy.Publisher('reset_trigger', Int8, queue_size=1)
+    pub_drive_trigger = rospy.Publisher('drive_trigger', Int8, queue_size=1)
 
     rospy.Subscriber('wheel_odometry', Odometry,
                      callback_get_odometry, queue_size=1)
