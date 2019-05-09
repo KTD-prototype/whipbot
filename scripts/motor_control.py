@@ -36,13 +36,27 @@ target_position = [0, 0]  # not used
 target_velocity = [0, 0]  # not used
 target_torque = [0, 0]  # [command_left, command_right]
 
-PID_GAIN = [400.0, 0.0, 25.0]  # [P gain, I gain, D gain]
+PID_GAIN = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 balancing_angle = - 0.0
 
 
+# get the number of motors : usually, the whipbot has two servo motors
 def callback_init(number):
     global num, target_position, target_velocity, target_torque
     num = number.data
+    rospy.loginfo('Found two motors!')
+
+
+def set_PID_gains():
+    global PID_GAIN
+    if rospy.has_param('~pid_gains'):
+        PID_GAIN = rospy.get_param('~pid_gains', [0.0, 0.0, 0.0])
+    else:
+        rospy.logwarn(
+            "you haven't set ros parameter indicates the pid gains(/pid_gains) for posture control. Plsease set them via launch file!")
+
+    rospy.logwarn("set PID gains as " + str(PID_GAIN))
+    print("")
 
 
 def callback_get_motion(imu_data):
@@ -89,12 +103,13 @@ def velocity_control():
 
 
 def posture_control():
-    global posture_angle, gyro_rate, target_torque
+    global posture_angle, gyro_rate, target_torque, PID_GAIN
 
     # calculate target_torque based on posture and angular velocity
     target_torque[1] = PID_GAIN[0] * -1 * \
         (posture_angle[1] - balancing_angle) + PID_GAIN[2] * gyro_rate[1]
     target_torque[0] = -1 * target_torque[1]
+    # rospy.logwarn(PID_GAIN[2])
 
 
 def servo_command():
@@ -121,6 +136,8 @@ if __name__ == '__main__':
     rospy.Subscriber('the_number_of_servo', Int16, callback_init, queue_size=1)
     rospy.Subscriber('whipbot_motion_command', Twist,
                      callback_get_motion_command, queue_size=1)
+
+    set_PID_gains()
 
     rate = rospy.Rate(100)
     while not rospy.is_shutdown():
