@@ -18,6 +18,7 @@ import math
 from std_msgs.msg import Int16
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
+from nav_msgs.msg import Odometry
 # from whipbot.msg import Posture_angle
 from kondo_b3mservo_rosdriver.msg import Multi_servo_command
 from kondo_b3mservo_rosdriver.msg import Multi_servo_info
@@ -33,10 +34,10 @@ dt = 0.0
 posture_angle = [0.0, 0.0, 0.0]  # roll, pitch, yaw
 accel = [0.0, 0.0, 0.0]  # x, y, z
 gyro_rate = [0.0, 0.0, 0.0]  # roll, pitch, yaw
-current_linear_velocity = 0.0 # current robot velocity(lin)
-current_angular_velocity = 0.0 # current robot velocity(ang)
-last_linear_velocity = 0.0 # last robot velocity(lin)
-last_angular_velocity = 0.0 # last robot velocity(ang)
+current_linear_velocity = 0.0  # current robot velocity(lin)
+current_angular_velocity = 0.0  # current robot velocity(ang)
+last_linear_velocity = 0.0  # last robot velocity(lin)
+last_angular_velocity = 0.0  # last robot velocity(ang)
 
 num = 0
 target_position = [0, 0]  # not used
@@ -44,8 +45,8 @@ target_velocity = [0, 0]  # not used
 target_torque = [0, 0]  # [command_left, command_right]
 
 PID_GAIN_POSTURE = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
-PID_GAIN_LINEAR_VELOCITY = [0.0, 0.0, 0.0] # [P gain, I gain, D gain]
-PID_GAIN_ANGULAR_VELOCITY = [0.0, 0.0, 0.0] # [P gain, I gain, D gain]
+PID_GAIN_LINEAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
+PID_GAIN_ANGULAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 balancing_angle = - 0.0
 torque_command_for_rotation = 0.0
 
@@ -54,13 +55,13 @@ torque_command_for_rotation = 0.0
 def callback_init(number):
     global num, target_position, target_velocity, target_torque
     num = number.data
-    rospy.loginfo('Found two motors!')
 
 
 def set_PID_gains():
     global PID_GAIN_POSTURE, PID_GAIN_LINEAR_VELOCITY, PID_GAIN_ANGULAR_VELOCITY
     if rospy.has_param('~pid_gains_posture'):
-        PID_GAIN_POSTURE = rospy.get_param('~pid_gains_posture', [0.0, 0.0, 0.0])
+        PID_GAIN_POSTURE = rospy.get_param(
+            '~pid_gains_posture', [0.0, 0.0, 0.0])
     else:
         rospy.logwarn(
             "you haven't set ros parameter indicates the pid gains(/pid_gains_posture) for posture control. Plsease set them via launch file!")
@@ -68,19 +69,23 @@ def set_PID_gains():
     print("")
 
     if rospy.has_param('~pid_gains_linear_velocity'):
-        PID_GAIN_LINEAR_VELOCITY = rospy.get_param('~pid_gains_linear_velocity', [0.0, 0.0, 0.0])
+        PID_GAIN_LINEAR_VELOCITY = rospy.get_param(
+            '~pid_gains_linear_velocity', [0.0, 0.0, 0.0])
     else:
         rospy.logwarn(
             "you haven't set ros parameter indicates the pid gains(/pid_gains_linear_velocity) for linear velocity control. Plsease set them via launch file or command line!")
-    rospy.loginfo("set PID gains for linear velocity as " + str(PID_GAIN_LINEAR_VELOCITY))
+    rospy.loginfo("set PID gains for linear velocity as " +
+                  str(PID_GAIN_LINEAR_VELOCITY))
     print("")
 
     if rospy.has_param('~pid_gains_angular_velocity'):
-        PID_GAIN_ANGULAR_VELOCITY = rospy.get_param('~pid_gains_angular_velocity', [0.0, 0.0, 0.0])
+        PID_GAIN_ANGULAR_VELOCITY = rospy.get_param(
+            '~pid_gains_angular_velocity', [0.0, 0.0, 0.0])
     else:
         rospy.loginfo(
             "you haven't set ros parameter indicates the pid gains(/pid_gains_angular_velocity) for angular velocity control. Plsease set them via launch file or command line!")
-    rospy.logwarn("set PID gains for angular velocity as " + str(PID_GAIN_ANGULAR_VELOCITY))
+    rospy.loginfo("set PID gains for angular velocity as " +
+                  str(PID_GAIN_ANGULAR_VELOCITY))
     print("")
 
 
@@ -105,6 +110,7 @@ def callback_get_motion(imu_data):
 
     # rospy.logwarn(posture_angle)
 
+
 def callback_get_odometry(wheel_odometry):
     global current_linear_velocity, current_angular_velocity
     current_linear_velocity = wheel_odometry.twist.twist.linear.x
@@ -113,9 +119,15 @@ def callback_get_odometry(wheel_odometry):
 
 def callback_get_motion_command(whipbot_motion_command):
     global linear_velocity_command, angular_velocity_command
+    global balancing_angle, torque_command_for_rotation
     linear_velocity_command = whipbot_motion_command.linear.x
     angular_velocity_command = whipbot_motion_command.angular.z
-    velocity_control()
+
+    if linear_velocity_command != 0 or angular_velocity_command != 0:
+        velocity_control()
+    else:
+        balancing_angle = 0
+        torque_command_for_rotation = 0
 
 
 def velocity_control():
@@ -128,10 +140,15 @@ def velocity_control():
     dt = current_timestamp - last_timestamp
 
     acceleration_linear = (current_linear_velocity - last_linear_velocity) / dt
-    acceleration_angular = (current_angular_velocity - last_angular_velocity) / dt
+    acceleration_angular = (current_angular_velocity -
+                            last_angular_velocity) / dt
 
-    balancing_angle = (current_linear_velocity - linear_velocity_command) * PID_GAIN_LINEAR_VELOCITY[0] + acceleration_linear * PID_GAIN_LINEAR_VELOCITY[2]
-    torque_command_for_rotation = (angular_velocity_command - current_angular_velocity) * PID_GAIN_ANGULAR_VELOCITY[0] - acceleration_angular * PID_GAIN_ANGULAR_VELOCITY[2]
+    balancing_angle = (current_linear_velocity - linear_velocity_command) * \
+        PID_GAIN_LINEAR_VELOCITY[0] + \
+        acceleration_linear * PID_GAIN_LINEAR_VELOCITY[2]
+    torque_command_for_rotation = (angular_velocity_command - current_angular_velocity) * \
+        PID_GAIN_ANGULAR_VELOCITY[0] - \
+        acceleration_angular * PID_GAIN_ANGULAR_VELOCITY[2]
 
     last_linear_velocity = current_linear_velocity
     last_angular_velocity = current_angular_velocity
@@ -154,9 +171,10 @@ def posture_control():
 
     # calculate target_torque based on posture and angular velocity
     target_torque[1] = PID_GAIN_POSTURE[0] * -1 * \
-        (posture_angle[1] - balancing_angle) + PID_GAIN_POSTURE[2] * gyro_rate[1] + torque_command_for_rotation
+        (posture_angle[1] - balancing_angle) + PID_GAIN_POSTURE[2] * \
+        gyro_rate[1] + torque_command_for_rotation
     target_torque[0] = -1 * target_torque[1]
-    # rospy.logwarn(PID_GAIN_POSTURE[2])
+    # rospy.loginfo(torque_command_for_rotation)
 
 
 def servo_command():

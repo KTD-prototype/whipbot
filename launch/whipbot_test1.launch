@@ -3,7 +3,7 @@
   <node name="whipbot_main"   pkg="whipbot" type="whipbot_main.py" output="screen"/>
   <node name="get_sernsor" pkg="whipbot" type="get_sernsor.py" output="screen"/>
   <node name="motion_generator"   pkg="whipbot" type="motion_generator.py" output="screen"/>
-  
+
   <node name="wheel_odometry"   pkg="whipbot" type="wheel_odometry.py" output="screen">
     <param name="pulse_per_round" value="4096.0"/>
     <param name="wheel_diameter" value="0.1524"/>

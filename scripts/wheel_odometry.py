@@ -52,18 +52,19 @@ normalized_robot_velocity_2 = [0.0, 0.0]
 battery_voltage_warn_flag = 0
 battery_voltage_fatal_flag = 0
 # publish a warning when battery voltage is lower than 14200 [mV] (14.2V or 3.725V/cell)
-BATTERY_VOLTAGE_WARN = 14200
+BATTERY_VOLTAGE_WARN = 11000
 # publish warnings when battery voltage is lower than 13900 [mV] (13.9V or 3.475V/cell)
-BATTERY_VOLTAGE_FATAL = 13900
+BATTERY_VOLTAGE_FATAL = 10500
 
 
 def set_parameters():
     global PULSE_PER_ROUND, WHEEL_DIAMETER, TREAD
-    PULSE_PER_ROUND = rospy.get_param('~pulse_per_round', 4096.0)
-    WHEEL_DIAMETER = rospy.get_param('~wheel_diameter', 0.1524)
-    TREAD = rospy.get_param('~tread', 0.25)
-    rospy.loginfo(
-        "if you haven't set ros parameter indicates /pulse_per_round, /wheel_diameter, and /tread, Please command '$rosparam set /***' or set them in a launch file")
+    PULSE_PER_ROUND = rospy.get_param('~pulse_per_round', 0.0)
+    WHEEL_DIAMETER = rospy.get_param('~wheel_diameter', 0.0)
+    TREAD = rospy.get_param('~tread', 0.0)
+    if PULSE_PER_ROUND == 0 or WHEEL_DIAMETER == 0 or TREAD == 0:
+        rospy.logwarn(
+            "if you haven't set ros parameter indicates /pulse_per_round, /wheel_diameter, and /tread, Please command '$rosparam set /***' or set them in a launch file")
     print("")
 
 
