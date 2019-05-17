@@ -59,10 +59,10 @@ BATTERY_VOLTAGE_FATAL = 13900
 
 def set_parameters():
     global PULSE_PER_ROUND, WHEEL_DIAMETER, TREAD
-    PULSE_PER_ROUND = rospy.get_param('pulse_per_round', 4096.0)
-    WHEEL_DIAMETER = rospy.get_param('wheel_diameter', 0.1524)
-    TREAD = rospy.get_param('tread', 0.25)
-    rospy.logwarn(
+    PULSE_PER_ROUND = rospy.get_param('~pulse_per_round', 4096.0)
+    WHEEL_DIAMETER = rospy.get_param('~wheel_diameter', 0.1524)
+    TREAD = rospy.get_param('~tread', 0.25)
+    rospy.loginfo(
         "if you haven't set ros parameter indicates /pulse_per_round, /wheel_diameter, and /tread, Please command '$rosparam set /***' or set them in a launch file")
     print("")
 

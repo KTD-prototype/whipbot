@@ -42,7 +42,7 @@ current_robot_location = [0.0, 0.0, 0.0]
 # current relative orientation(quaternion) from a start point : [x, y, z, w]
 current_robot_orientation_quaternion = [0.0, 0.0, 0.0, 0.0]
 
-# current relative orientation(quaternion) from a start point : [roll, pitch, yaw]
+# current relative orientation(quaternion) from a start point : [roll, pitch, heading]
 current_robot_orientation_euler = [0.0, 0.0, 0.0]
 
 # last relative location from a start point : [x, y, z]
@@ -100,14 +100,15 @@ def callback_get_odometry(wheel_odometry):
 
 
 def generate_command():
-    global joy_linear_vel, joy_angular_vel, main_linear_vel, main_angular_vel, current_robot_location, last_robot_location, accumulated_error_of_robot_location, accumulated_error_of_robot_orientation
+    global joy_linear_vel, joy_angular_vel, main_linear_vel, main_angular_vel, current_robot_location, last_robot_location
+    global accumulated_error_of_robot_location, accumulated_error_of_robot_orientation
     global last_robot_orientation_euler
 
     if joy_linear_vel != 0 or joy_angular_vel != 0:
-        # reset accumulated location error during robot's hovering
+        # reset accumulated error of location and orientation during robot's hovering
         accumulated_error_of_robot_location = [0.0, 0.0, 0.0]
         accumulated_error_of_robot_orientation = [
-            0.0, 0.0, 0.0]  # reset accumulation
+            0.0, 0.0, 0.0]
         whipbot_motion_command.linear.x = joy_linear_vel * 0.4  # [m/s]
         whipbot_motion_command.angular.z = joy_angular_vel * 2.0  # [rad/s]
         pub_motion_control.publish(whipbot_motion_command)
