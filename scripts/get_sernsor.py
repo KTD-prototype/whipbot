@@ -49,12 +49,16 @@ def get_data():
     imu_data.orientation.y = posture_angle_quaternion[1]
     imu_data.orientation.z = posture_angle_quaternion[2]
     imu_data.orientation.w = posture_angle_quaternion[3]
+
+    # transform to [m/s^2] from [g]
     imu_data.linear_acceleration.x = data[3] * 9.81
     imu_data.linear_acceleration.y = data[4] * 9.81
     imu_data.linear_acceleration.z = data[5] * 9.81
-    imu_data.angular_velocity.x = data[6]
-    imu_data.angular_velocity.y = data[7]
-    imu_data.angular_velocity.z = data[8]
+
+    # transform to [rad/sec] from [deg/sec]
+    imu_data.angular_velocity.x = data[6] * math.pi / 180
+    imu_data.angular_velocity.y = data[7] * math.pi / 180
+    imu_data.angular_velocity.z = data[8] * math.pi / 180
 
 
 if __name__ == '__main__':

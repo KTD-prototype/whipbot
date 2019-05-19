@@ -51,10 +51,10 @@ normalized_robot_velocity_2 = [0.0, 0.0]
 # variables and constants to watch battery boltage
 battery_voltage_warn_flag = 0
 battery_voltage_fatal_flag = 0
-# publish a warning when battery voltage is lower than 14200 [mV] (14.2V or 3.725V/cell)
-BATTERY_VOLTAGE_WARN = 11000
-# publish warnings when battery voltage is lower than 13900 [mV] (13.9V or 3.475V/cell)
-BATTERY_VOLTAGE_FATAL = 10500
+# publish a warning when battery voltage is lower than 11200 [mV] (3.73V/cell)
+BATTERY_VOLTAGE_WARN = 11200
+# publish warnings when battery voltage is lower than 10700 [mV] (3.57V/cell)
+BATTERY_VOLTAGE_FATAL = 10700
 
 
 def set_parameters():
