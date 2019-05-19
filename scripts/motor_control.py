@@ -172,9 +172,14 @@ def posture_control():
     # calculate target_torque based on posture and angular velocity
     target_torque[1] = PID_GAIN_POSTURE[0] * -1 * \
         (posture_angle[1] - balancing_angle) + PID_GAIN_POSTURE[2] * \
-        gyro_rate[1] + torque_command_for_rotation
+        gyro_rate[1]
     target_torque[0] = -1 * target_torque[1]
+
+    target_torque[1] = target_torque[1] + torque_command_for_rotation
+    target_torque[0] = target_torque[0] + torque_command_for_rotation
     # rospy.loginfo(torque_command_for_rotation)
+    # rospy.loginfo(balancing_angle)
+    # rospy.loginfo(PID_GAIN_POSTURE)
 
 
 def servo_command():

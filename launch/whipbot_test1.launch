@@ -13,7 +13,7 @@
   <node name="motor_control"   pkg="whipbot" type="motor_control.py" output="screen">
     <rosparam param="pid_gains_posture">
       <!-- input the pid gain parameters to the list below -->
-      [400.0, 0.0, 15.0]
+      [0.0, 0.0, 0.0]
     </rosparam>
     <rosparam param="pid_gains_linear_velocity">
       <!-- input the pid gain parameters to the list below -->
