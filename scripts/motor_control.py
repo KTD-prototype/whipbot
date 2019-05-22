@@ -15,7 +15,7 @@ import signal
 import sys
 import tf
 import math
-from std_msgs.msg import Int16
+from std_msgs.msg import Int16, Float32
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
@@ -125,7 +125,7 @@ def callback_change_pid_gain(pid):
     # PID_GAIN_ANGULAR_VELOCITY[2] = pid.data
 
     # print to console according to your choice
-    loginfo('set PID_GAIN_POSTURE as ' + str(PID_GAIN_POSTURE))
+    rospy.loginfo('set PID_GAIN_POSTURE as ' + str(PID_GAIN_POSTURE))
     # loginfo('set PID_GAIN_LINEAR_VELOCITY as ' + str(PID_GAIN_LINEAR_VELOCITY))
     # loginfo('set PID_GAIN_ANGULAR_VELOCITY as ' +
     #         str(PID_GAIN_ANGULAR_VELOCITY))
@@ -197,9 +197,10 @@ def posture_control():
 
     target_torque[1] = target_torque[1] + torque_command_for_rotation
     target_torque[0] = target_torque[0] + torque_command_for_rotation
+    # rospy.loginfo(target_torque)
     # rospy.loginfo(torque_command_for_rotation)
     # rospy.loginfo(balancing_angle)
-    # rospy.loginfo(PID_GAIN_POSTURE)
+    rospy.loginfo(PID_GAIN_POSTURE)
 
 
 def servo_command():
@@ -230,7 +231,8 @@ if __name__ == '__main__':
                      callback_get_odometry, queue_size=1)
 
     # (for tuning) subscriber for change PID gains via message
-    rospy.Subscriber('pid_gain', Int16, callback_change_pid_gain)
+    rospy.Subscriber('pid_gain', Float32,
+                     callback_change_pid_gain)
 
     # set initial PID gains via ros parameter
     set_PID_gains()
