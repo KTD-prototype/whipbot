@@ -53,9 +53,9 @@ battery_voltage_warn_flag = 0
 battery_voltage_fatal_flag = 0
 
 # publish a warning when battery voltage is lower than 11200 [mV] (3.73V/cell)
-BATTERY_VOLTAGE_WARN = 11200
+# BATTERY_VOLTAGE_WARN = 11200
 # publish warnings when battery voltage is lower than 10700 [mV] (3.57V/cell)
-BATTERY_VOLTAGE_FATAL = 10700
+# BATTERY_VOLTAGE_FATAL = 10700
 
 
 def set_parameters():
