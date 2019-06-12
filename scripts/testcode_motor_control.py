@@ -201,7 +201,7 @@ def posture_control():
     # rospy.loginfo(target_torque)
     # rospy.loginfo(torque_command_for_rotation)
     # rospy.loginfo(balancing_angle)
-    # rospy.loginfo(PID_GAIN_POSTURE)
+    rospy.loginfo(PID_GAIN_POSTURE)
 
 
 def servo_command():
@@ -217,6 +217,13 @@ def servo_command():
     # rospy.logwarn(multi_servo_command)
     pub_motor_control.publish(multi_servo_command)
     del multi_servo_command
+
+
+def get_value():
+    selection = "Value = " + str(var.get())
+    label.config(text=selection)
+    print(selection)
+    pass
 
 
 if __name__ == '__main__':
@@ -237,6 +244,19 @@ if __name__ == '__main__':
 
     # set initial PID gains via ros parameter
     set_PID_gains()
+
+    # define GUI to set set_parameters
+    root = Tk()
+    var = DoubleVar()
+    scale = Scale(root, variable=var)
+    scale.pack(anchor=CENTER)
+
+    button = Button(root, text="Apply", command=get_value)
+    button.pack(anchor=CENTER)
+
+    label = Label(root)
+    label.pack()
+    root.mainloop()
 
     rate = rospy.Rate(100)
     while not rospy.is_shutdown():
