@@ -21,6 +21,7 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 # from whipbot.msg import Posture_angle
+from whipbot.msg import PID_gains
 from kondo_b3mservo_rosdriver.msg import Multi_servo_command
 from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
@@ -83,11 +84,12 @@ def set_PID_gains():
         PID_GAIN_ANGULAR_VELOCITY = rospy.get_param(
             '~pid_gain_angular_velocity', [0.0, 0.0, 0.0])
     else:
-        rospy.loginfo(
+        rospy.logwarn(
             "you haven't set ros parameter indicates the pid gains(/pid_gains_angular_velocity) for angular velocity control. Plsease set them via launch file or command line!")
     rospy.loginfo("set PID gain for angular velocity as " +
                   str(PID_GAIN_ANGULAR_VELOCITY))
     print("")
+    publish_current_gains()
 
 
 def callback_get_motion(imu_data):
@@ -201,7 +203,7 @@ def posture_control():
     # rospy.loginfo(target_torque)
     # rospy.loginfo(torque_command_for_rotation)
     # rospy.loginfo(balancing_angle)
-    rospy.loginfo(PID_GAIN_POSTURE)
+    # rospy.loginfo(PID_GAIN_POSTURE)
 
 
 def servo_command():
@@ -219,11 +221,28 @@ def servo_command():
     del multi_servo_command
 
 
-def get_value():
-    selection = "Value = " + str(var.get())
-    label.config(text=selection)
-    print(selection)
+def callback_update_PID_gains(new_PID_gains):
     pass
+
+
+def publish_current_gains():
+    global PID_GAIN_POSTURE, PID_GAIN_LINEAR_VELOCITY, PID_GAIN_ANGULAR_VELOCITY
+    current_PID_gains = PID_gains()
+    for i in range(3):
+        current_PID_gains.pid_gains_for_posture.append(PID_GAIN_POSTURE[i])
+        current_PID_gains.pid_gains_for_linear_velocity.append(
+            PID_GAIN_LINEAR_VELOCITY[i])
+        current_PID_gains.pid_gains_for_angular_velocity.append(
+            PID_GAIN_ANGULAR_VELOCITY[i])
+    pub_current_gains.publish(current_PID_gains)
+    del current_PID_gains
+
+    #
+    # def get_value():
+    #     selection = "Value = " + str(var.get())
+    #     label.config(text=selection)
+    #     print(selection)
+    #     pass
 
 
 if __name__ == '__main__':
@@ -231,6 +250,9 @@ if __name__ == '__main__':
 
     pub_motor_control = rospy.Publisher(
         'multi_servo_command', Multi_servo_command, queue_size=1)
+    pub_current_gains = rospy.Publisher(
+        'current_PID_gains', PID_gains, queue_size=1, latch=True)
+
     rospy.Subscriber('imu', Imu, callback_get_motion, queue_size=1)
     rospy.Subscriber('the_number_of_servo', Int16, callback_init, queue_size=1)
     rospy.Subscriber('whipbot_motion_command', Twist,
@@ -241,22 +263,23 @@ if __name__ == '__main__':
     # (for tuning) subscriber for change PID gains via message
     rospy.Subscriber('pid_gain', Float32,
                      callback_change_pid_gain)
+    rospy.Subscriber('new_PID_gains', PID_gains, callback_update_PID_gains)
 
     # set initial PID gains via ros parameter
     set_PID_gains()
 
     # define GUI to set set_parameters
-    root = Tk()
-    var = DoubleVar()
-    scale = Scale(root, variable=var)
-    scale.pack(anchor=CENTER)
-
-    button = Button(root, text="Apply", command=get_value)
-    button.pack(anchor=CENTER)
-
-    label = Label(root)
-    label.pack()
-    root.mainloop()
+    # root = Tk()
+    # var = DoubleVar()
+    # scale = Scale(root, variable=var)
+    # scale.pack(anchor=CENTER)
+    #
+    # button = Button(root, text="Apply", command=get_value)
+    # button.pack(anchor=CENTER)
+    #
+    # label = Label(root)
+    # label.pack()
+    # root.mainloop()
 
     rate = rospy.Rate(100)
     while not rospy.is_shutdown():

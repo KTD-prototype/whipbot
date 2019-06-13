@@ -10,10 +10,10 @@
     <param name="tread" value="0.25"/>
   </node>
 
-  <node name="motor_control"   pkg="whipbot" type="motor_control.py" output="screen">
+  <node name="motor_control"   pkg="whipbot" type="testcode_motor_control.py" output="screen">
     <rosparam param="pid_gain_posture">
       <!-- input the pid gain parameters to the list below -->
-      [0.0, 0.0, 0.0]
+      [10.0, 10.0, 10.0]
     </rosparam>
     <rosparam param="pid_gain_linear_velocity">
       <!-- input the pid gain parameters to the list below -->
