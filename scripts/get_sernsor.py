@@ -39,10 +39,10 @@ def get_data():
         data[i] = ser.readline()
         data[i] = data[i].replace('\r\n', '')
         data[i] = float(data[i])
-
-    posture.roll = data[0]
-    posture.pitch = data[1] * 5000
-    posture.heading = data[2]
+    #
+    # posture.roll = data[0]
+    # posture.pitch = data[1] * 5000
+    # posture.heading = data[2]
 
     # transform posture angle[deg] to [radian]
     for i in range(3):
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         try:
             get_data()
-            posture_angle_pub.publish(posture)
+            # posture_angle_pub.publish(posture)
             imu_pub.publish(imu_data)
             # for debug(monitor loop rate)
             # rospy.loginfo(count)
