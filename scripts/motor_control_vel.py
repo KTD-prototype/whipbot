@@ -21,6 +21,7 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 # from whipbot.msg import Posture_angle
+from whipbot.msg import PID_gains
 from kondo_b3mservo_rosdriver.msg import Multi_servo_command
 from kondo_b3mservo_rosdriver.msg import Multi_servo_info
 
@@ -42,8 +43,8 @@ last_angular_velocity = 0.0  # last robot velocity(ang)
 
 num = 0
 target_position = [0, 0]  # not used
-target_velocity = [0, 0]  # not used
-target_torque = [0, 0]  # [command_left, command_right]
+target_velocity = [0, 0]  # [command_left, command_right]
+target_torque = [0, 0]  # not used
 
 PID_GAIN_POSTURE = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 PID_GAIN_LINEAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
@@ -62,29 +63,33 @@ def set_PID_gains():
     global PID_GAIN_POSTURE, PID_GAIN_LINEAR_VELOCITY, PID_GAIN_ANGULAR_VELOCITY
     if rospy.has_param('~pid_gain_posture'):
         PID_GAIN_POSTURE = rospy.get_param(
-            '~pid_gain_posture', [0.0, 0.0, 0.0])
+            '~pid_gain_posture')
     else:
         rospy.logwarn(
             "you haven't set ros parameter indicates the pid gains(/pid_gains_posture) for posture control. Plsease set them via launch file!")
-    rospy.loginfo("set PID gain for posture as " + str(PID_GAIN_POSTURE))
-    print("")
 
     if rospy.has_param('~pid_gain_linear_velocity'):
         PID_GAIN_LINEAR_VELOCITY = rospy.get_param(
-            '~pid_gain_linear_velocity', [0.0, 0.0, 0.0])
+            '~pid_gain_linear_velocity')
     else:
         rospy.logwarn(
             "you haven't set ros parameter indicates the pid gain(/pid_gains_linear_velocity) for linear velocity control. Plsease set them via launch file or command line!")
-    rospy.loginfo("set PID gains for linear velocity as " +
-                  str(PID_GAIN_LINEAR_VELOCITY))
-    print("")
 
     if rospy.has_param('~pid_gain_angular_velocity'):
         PID_GAIN_ANGULAR_VELOCITY = rospy.get_param(
-            '~pid_gain_angular_velocity', [0.0, 0.0, 0.0])
+            '~pid_gain_angular_velocity')
     else:
-        rospy.loginfo(
+        rospy.logwarn(
             "you haven't set ros parameter indicates the pid gains(/pid_gains_angular_velocity) for angular velocity control. Plsease set them via launch file or command line!")
+    publish_current_gains()
+    display_current_gains()
+
+
+def display_current_gains():
+    global PID_GAIN_POSTURE, PID_GAIN_LINEAR_VELOCITY, PID_GAIN_ANGULAR_VELOCITY
+    rospy.loginfo("set PID gain for posture as " + str(PID_GAIN_POSTURE))
+    rospy.loginfo("set PID gains for linear velocity as " +
+                  str(PID_GAIN_LINEAR_VELOCITY))
     rospy.loginfo("set PID gain for angular velocity as " +
                   str(PID_GAIN_ANGULAR_VELOCITY))
     print("")
@@ -155,7 +160,7 @@ def velocity_control():
     global linear_velocity_command, angular_velocity_command
     global current_linear_velocity, current_angular_velocity, last_linear_velocity, last_angular_velocity
     global current_timestamp, last_timestamp, dt
-    global balancing_angle, torque_command_for_rotation
+    global balancing_angle, velocity_command_for_rotation
 
     current_timestamp = time.time()
     dt = current_timestamp - last_timestamp
@@ -167,7 +172,7 @@ def velocity_control():
     balancing_angle = (current_linear_velocity - linear_velocity_command) * \
         PID_GAIN_LINEAR_VELOCITY[0] + \
         acceleration_linear * PID_GAIN_LINEAR_VELOCITY[2]
-    torque_command_for_rotation = (angular_velocity_command - current_angular_velocity) * \
+    velocity_command_for_rotation = (angular_velocity_command - current_angular_velocity) * \
         PID_GAIN_ANGULAR_VELOCITY[0] - \
         acceleration_angular * PID_GAIN_ANGULAR_VELOCITY[2]
 
@@ -187,17 +192,17 @@ def velocity_control():
 
 
 def posture_control():
-    global posture_angle, gyro_rate, target_torque, PID_GAIN_POSTURE
-    global balancing_angle, torque_command_for_rotation
+    global posture_angle, gyro_rate, target_velocity, PID_GAIN_POSTURE
+    global balancing_angle, velocity_command_for_rotation
 
     # calculate target_torque based on posture and angular velocity
-    target_torque[1] = PID_GAIN_POSTURE[0] * -1 * \
+    target_velocity[1] = PID_GAIN_POSTURE[0] * -1 * \
         (posture_angle[1] - balancing_angle) + PID_GAIN_POSTURE[2] * \
         gyro_rate[1]
-    target_torque[0] = -1 * target_torque[1]
+    target_velocity[0] = -1 * target_torque[1]
 
-    target_torque[1] = target_torque[1] + torque_command_for_rotation
-    target_torque[0] = target_torque[0] + torque_command_for_rotation
+    target_velocity[1] = target_velocity[1] + velocity_command_for_rotation
+    target_velocity[0] = target_velocity[0] + velocity_command_for_rotation
     # rospy.loginfo(target_torque)
     # rospy.loginfo(torque_command_for_rotation)
     # rospy.loginfo(balancing_angle)
@@ -219,11 +224,43 @@ def servo_command():
     del multi_servo_command
 
 
+def callback_update_PID_gains(new_PID_gains):
+    global PID_GAIN_POSTURE, PID_GAIN_LINEAR_VELOCITY, PID_GAIN_ANGULAR_VELOCITY
+    PID_GAIN_POSTURE = new_PID_gains.pid_gains_for_posture
+    PID_GAIN_LINEAR_VELOCITY = new_PID_gains.pid_gains_for_linear_velocity
+    PID_GAIN_ANGULAR_VELOCITY = new_PID_gains.pid_gains_for_angular_velocity
+    display_current_gains()
+    # rospy.
+
+
+def publish_current_gains():
+    global PID_GAIN_POSTURE, PID_GAIN_LINEAR_VELOCITY, PID_GAIN_ANGULAR_VELOCITY
+    current_PID_gains = PID_gains()
+    for i in range(3):
+        current_PID_gains.pid_gains_for_posture.append(PID_GAIN_POSTURE[i])
+        current_PID_gains.pid_gains_for_linear_velocity.append(
+            PID_GAIN_LINEAR_VELOCITY[i])
+        current_PID_gains.pid_gains_for_angular_velocity.append(
+            PID_GAIN_ANGULAR_VELOCITY[i])
+    pub_current_gains.publish(current_PID_gains)
+    del current_PID_gains
+
+    #
+    # def get_value():
+    #     selection = "Value = " + str(var.get())
+    #     label.config(text=selection)
+    #     print(selection)
+    #     pass
+
+
 if __name__ == '__main__':
     rospy.init_node('motor_control')
 
     pub_motor_control = rospy.Publisher(
         'multi_servo_command', Multi_servo_command, queue_size=1)
+    pub_current_gains = rospy.Publisher(
+        'current_PID_gains', PID_gains, queue_size=1, latch=True)
+
     rospy.Subscriber('imu', Imu, callback_get_motion, queue_size=1)
     rospy.Subscriber('the_number_of_servo', Int16, callback_init, queue_size=1)
     rospy.Subscriber('whipbot_motion_command', Twist,
@@ -234,6 +271,7 @@ if __name__ == '__main__':
     # (for tuning) subscriber for change PID gains via message
     rospy.Subscriber('pid_gain', Float32,
                      callback_change_pid_gain)
+    rospy.Subscriber('new_PID_gains', PID_gains, callback_update_PID_gains)
 
     # set initial PID gains via ros parameter
     set_PID_gains()

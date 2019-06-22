@@ -139,12 +139,12 @@ def callback_get_servo_info(servo_info):
         x - y for (x, y) in zip(current_encoder_count, last_encoder_count)]
     last_encoder_count = current_encoder_count
     last_time = time.time()
-
-    if battery_voltage[0] < BATTERY_VOLTAGE_WARN and battery_voltage_warn_flag == 0:
-        rospy.logwarn('battery voltage is low !')
-        battery_voltage_warn_flag_left = 1
-    elif battery_voltage[0] < BATTERY_VOLTAGE_FATAL:
-        rospy.logfatal('battery voltage is fatally low !')
+    #
+    # if battery_voltage[0] < BATTERY_VOLTAGE_WARN and battery_voltage_warn_flag == 0:
+    #     rospy.logwarn('battery voltage is low !')
+    #     battery_voltage_warn_flag_left = 1
+    # elif battery_voltage[0] < BATTERY_VOLTAGE_FATAL:
+    #     rospy.logfatal('battery voltage is fatally low !')
 
 
 def calculate_odometry():
