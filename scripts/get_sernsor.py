@@ -16,6 +16,7 @@ import sys
 import tf
 import math
 from sensor_msgs.msg import Imu
+from whipbot.msg import Posture_angle
 
 ser = serial.Serial('/dev/Lambda', 115200)
 send_command = []
@@ -38,6 +39,10 @@ def get_data():
         data[i] = ser.readline()
         data[i] = data[i].replace('\r\n', '')
         data[i] = float(data[i])
+
+    posture.roll = data[0]
+    posture.pitch = data[1] * 5000
+    posture.heading = data[2]
 
     # transform posture angle[deg] to [radian]
     for i in range(3):
@@ -63,23 +68,23 @@ def get_data():
 
 if __name__ == '__main__':
     rospy.init_node('get_sernsor')
-    # posture_angle_pub = rospy.Publisher(
-    #     'posture_angle', Posture_angle, queue_size=1)
+    posture_angle_pub = rospy.Publisher(
+        'posture_angle', Posture_angle, queue_size=1)
     imu_pub = rospy.Publisher('/imu', Imu, queue_size=1)
 
-    # posture = Posture_angle()
+    posture = Posture_angle()
     imu_data = Imu()
     imu_data.header.frame_id = 'map'
     # you should wait for a while until your arduino is ready
     time.sleep(5)
 
     # set the loop rate at 50Hz (higher is better, but it looks 60Hz is MAXIMUM for my environment)
-    rate = rospy.Rate(50)
+    rate = rospy.Rate(100)
 
     while not rospy.is_shutdown():
         try:
             get_data()
-            # posture_angle_pub.publish(posture)
+            posture_angle_pub.publish(posture)
             imu_pub.publish(imu_data)
             # for debug(monitor loop rate)
             # rospy.loginfo(count)

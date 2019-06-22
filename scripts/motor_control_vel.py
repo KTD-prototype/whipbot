@@ -104,6 +104,8 @@ def callback_get_motion(imu_data):
     posture_angle = tf.transformations.euler_from_quaternion(
         posture_angle_quaternion)
     posture_angle = list(posture_angle)
+
+    # convert posture angle from [rad] to [deg]
     for i in range(3):
         posture_angle[i] = posture_angle[i] * 180.0 / math.pi
 
@@ -186,6 +188,7 @@ def posture_control():
     # rospy.loginfo(velocity_command_for_rotation)
     # rospy.loginfo(balancing_angle)
     # rospy.loginfo(PID_GAIN_POSTURE)
+    # rospy.loginfo(posture_angle)
 
 
 def servo_command():
