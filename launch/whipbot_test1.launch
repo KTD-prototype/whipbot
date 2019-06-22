@@ -3,7 +3,7 @@
   <node name="whipbot_main"   pkg="whipbot" type="whipbot_main.py" output="screen"/>
   <node name="get_sernsor" pkg="whipbot" type="get_sernsor.py" output="screen"/>
   <node name="motion_generator"   pkg="whipbot" type="motion_generator.py" output="screen"/>
-  <node name="set_param" pkg="whipbot" type="set_param.py" output="screen"/>
+
 
   <node name="wheel_odometry"   pkg="whipbot" type="wheel_odometry.py" output="screen">
     <param name="pulse_per_round" value="4096.0"/>
@@ -26,7 +26,7 @@
     </rosparam>
   </node>
 
-  <node name="motor_command" pkg="kondo_b3mservo_rosdriver" type="torque_control.py" output="screen"/>
+  <node name="motor_command" pkg="kondo_b3mservo_rosdriver" type="velocity_control.py" output="screen"/>
 
   <node name="joy_node"   pkg="joy" type="joy_node">
     <param name="autorepeat_rate" value="50"/>

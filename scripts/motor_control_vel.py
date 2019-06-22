@@ -50,12 +50,12 @@ PID_GAIN_POSTURE = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 PID_GAIN_LINEAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 PID_GAIN_ANGULAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 balancing_angle = - 0.0
-torque_command_for_rotation = 0.0
+velocity_command_for_rotation = 0.0
 
 
 # get the number of motors : usually, the whipbot has two servo motors
 def callback_init(number):
-    global num, target_position, target_velocity, target_torque
+    global num
     num = number.data
 
 
@@ -116,27 +116,6 @@ def callback_get_motion(imu_data):
     # rospy.logwarn(posture_angle)
 
 
-def callback_change_pid_gain(pid):
-    global PID_GAIN_POSTURE, PID_GAIN_LINEAR_VELOCITY, PID_GAIN_ANGULAR_VELOCITY
-
-    # choose a gain which you want to change from bellow
-    # PID_GAIN_POSTURE[0] = pid.data
-    # PID_GAIN_POSTURE[1] = pid.data
-    PID_GAIN_POSTURE[2] = pid.data
-    # PID_GAIN_LINEAR_VELOCITY[0] = pid.data
-    # PID_GAIN_LINEAR_VELOCITY[1] = pid.data
-    # PID_GAIN_LINEAR_VELOCITY[2] = pid.data
-    # PID_GAIN_ANGULAR_VELOCITY[0] = pid.data
-    # PID_GAIN_ANGULAR_VELOCITY[1] = pid.data
-    # PID_GAIN_ANGULAR_VELOCITY[2] = pid.data
-
-    # print to console according to your choice
-    rospy.loginfo('set PID_GAIN_POSTURE as ' + str(PID_GAIN_POSTURE))
-    # loginfo('set PID_GAIN_LINEAR_VELOCITY as ' + str(PID_GAIN_LINEAR_VELOCITY))
-    # loginfo('set PID_GAIN_ANGULAR_VELOCITY as ' +
-    #         str(PID_GAIN_ANGULAR_VELOCITY))
-
-
 def callback_get_odometry(wheel_odometry):
     global current_linear_velocity, current_angular_velocity
     current_linear_velocity = wheel_odometry.twist.twist.linear.x
@@ -145,7 +124,7 @@ def callback_get_odometry(wheel_odometry):
 
 def callback_get_motion_command(whipbot_motion_command):
     global linear_velocity_command, angular_velocity_command
-    global balancing_angle, torque_command_for_rotation
+    global balancing_angle, velocity_command_for_rotation
     linear_velocity_command = whipbot_motion_command.linear.x
     angular_velocity_command = whipbot_motion_command.angular.z
 
@@ -153,7 +132,7 @@ def callback_get_motion_command(whipbot_motion_command):
         velocity_control()
     else:
         balancing_angle = 0
-        torque_command_for_rotation = 0
+        velocity_command_for_rotation = 0
 
 
 def velocity_control():
@@ -195,30 +174,30 @@ def posture_control():
     global posture_angle, gyro_rate, target_velocity, PID_GAIN_POSTURE
     global balancing_angle, velocity_command_for_rotation
 
-    # calculate target_torque based on posture and angular velocity
+    # calculate target_velocity based on posture and angular velocity
     target_velocity[1] = PID_GAIN_POSTURE[0] * -1 * \
         (posture_angle[1] - balancing_angle) + PID_GAIN_POSTURE[2] * \
         gyro_rate[1]
-    target_velocity[0] = -1 * target_torque[1]
+    target_velocity[0] = -1 * target_velocity[1]
 
     target_velocity[1] = target_velocity[1] + velocity_command_for_rotation
     target_velocity[0] = target_velocity[0] + velocity_command_for_rotation
-    # rospy.loginfo(target_torque)
-    # rospy.loginfo(torque_command_for_rotation)
+    # rospy.loginfo(target_velocity)
+    # rospy.loginfo(velocity_command_for_rotation)
     # rospy.loginfo(balancing_angle)
     # rospy.loginfo(PID_GAIN_POSTURE)
 
 
 def servo_command():
-    global target_torque
+    global target_velocity
     multi_servo_command = Multi_servo_command()
     for i in range(2):
-        target_torque[i] = int(target_torque[i])
-        if target_torque[i] > 32000:
-            target_torque[i] = 32000
-        elif target_torque[i] < -32000:
-            target_torque[i] = -32000
-        multi_servo_command.target_torque.append(target_torque[i])
+        target_velocity[i] = int(target_velocity[i])
+        if target_velocity[i] > 32000:
+            target_velocity[i] = 32000
+        elif target_velocity[i] < -32000:
+            target_velocity[i] = -32000
+        multi_servo_command.target_velocity.append(target_velocity[i])
     # rospy.logwarn(multi_servo_command)
     pub_motor_control.publish(multi_servo_command)
     del multi_servo_command
@@ -269,8 +248,6 @@ if __name__ == '__main__':
                      callback_get_odometry, queue_size=1)
 
     # (for tuning) subscriber for change PID gains via message
-    rospy.Subscriber('pid_gain', Float32,
-                     callback_change_pid_gain)
     rospy.Subscriber('new_PID_gains', PID_gains, callback_update_PID_gains)
 
     # set initial PID gains via ros parameter
