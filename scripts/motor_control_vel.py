@@ -174,22 +174,22 @@ def velocity_control():
 
 
 def posture_control():
-    global posture_angle, accumulated_angle_error, gyro_rate, target_torque, PID_GAIN_POSTURE
-    global balancing_angle, torque_command_for_rotation
+    global posture_angle, accumulated_angle_error, gyro_rate, target_velocity, PID_GAIN_POSTURE
+    global balancing_angle, velocity_command_for_rotation
 
     accumulated_angle_error = accumulated_angle_error + \
         (posture_angle[1] - balancing_angle)
 
-    # calculate target_torque based on posture and angular velocity
-    target_torque[1] = PID_GAIN_POSTURE[0] * -1 * (posture_angle[1] - balancing_angle) + \
+    # calculate target_velocity based on posture and angular velocity
+    target_velocity[1] = PID_GAIN_POSTURE[0] * -1 * (posture_angle[1] - balancing_angle) + \
         PID_GAIN_POSTURE[1] * -1 * accumulated_angle_error + \
         PID_GAIN_POSTURE[2] * gyro_rate[1]
-    target_torque[0] = -1 * target_torque[1]
+    target_velocity[0] = -1 * target_velocity[1]
 
-    target_torque[1] = target_torque[1] + torque_command_for_rotation
-    target_torque[0] = target_torque[0] + torque_command_for_rotation
-    # rospy.loginfo(target_torque)
-    # rospy.loginfo(torque_command_for_rotation)
+    target_velocity[1] = target_velocity[1] + velocity_command_for_rotation
+    target_velocity[0] = target_velocity[0] + velocity_command_for_rotation
+    # rospy.loginfo(target_velocity)
+    # rospy.loginfo(velocity_command_for_rotation)
     # rospy.loginfo(balancing_angle)
     # rospy.loginfo(PID_GAIN_POSTURE)
 
