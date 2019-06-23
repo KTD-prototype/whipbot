@@ -49,6 +49,7 @@ target_torque = [0, 0]  # [command_left, command_right]
 PID_GAIN_POSTURE = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 PID_GAIN_LINEAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 PID_GAIN_ANGULAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
+accumulated_angle_error = 0
 balancing_angle = - 0.0
 torque_command_for_rotation = 0.0
 
@@ -116,27 +117,6 @@ def callback_get_motion(imu_data):
     # rospy.logwarn(posture_angle)
 
 
-def callback_change_pid_gain(pid):
-    global PID_GAIN_POSTURE, PID_GAIN_LINEAR_VELOCITY, PID_GAIN_ANGULAR_VELOCITY
-
-    # choose a gain which you want to change from bellow
-    # PID_GAIN_POSTURE[0] = pid.data
-    # PID_GAIN_POSTURE[1] = pid.data
-    PID_GAIN_POSTURE[2] = pid.data
-    # PID_GAIN_LINEAR_VELOCITY[0] = pid.data
-    # PID_GAIN_LINEAR_VELOCITY[1] = pid.data
-    # PID_GAIN_LINEAR_VELOCITY[2] = pid.data
-    # PID_GAIN_ANGULAR_VELOCITY[0] = pid.data
-    # PID_GAIN_ANGULAR_VELOCITY[1] = pid.data
-    # PID_GAIN_ANGULAR_VELOCITY[2] = pid.data
-
-    # print to console according to your choice
-    rospy.loginfo('set PID_GAIN_POSTURE as ' + str(PID_GAIN_POSTURE))
-    # loginfo('set PID_GAIN_LINEAR_VELOCITY as ' + str(PID_GAIN_LINEAR_VELOCITY))
-    # loginfo('set PID_GAIN_ANGULAR_VELOCITY as ' +
-    #         str(PID_GAIN_ANGULAR_VELOCITY))
-
-
 def callback_get_odometry(wheel_odometry):
     global current_linear_velocity, current_angular_velocity
     current_linear_velocity = wheel_odometry.twist.twist.linear.x
@@ -192,13 +172,16 @@ def velocity_control():
 
 
 def posture_control():
-    global posture_angle, gyro_rate, target_torque, PID_GAIN_POSTURE
+    global posture_angle, accumulated_angle_error, gyro_rate, target_torque, PID_GAIN_POSTURE
     global balancing_angle, torque_command_for_rotation
 
+    accumulated_angle_error = accumulated_angle_error + \
+        (posture_angle[1] - balancing_angle)
+
     # calculate target_torque based on posture and angular velocity
-    target_torque[1] = PID_GAIN_POSTURE[0] * -1 * \
-        (posture_angle[1] - balancing_angle) + PID_GAIN_POSTURE[2] * \
-        gyro_rate[1]
+    target_torque[1] = PID_GAIN_POSTURE[0] * -1 * (posture_angle[1] - balancing_angle) + \
+        PID_GAIN_POSTURE[1] * -1 * accumulated_angle_error + \
+        PID_GAIN_POSTURE[2] * gyro_rate[1]
     target_torque[0] = -1 * target_torque[1]
 
     target_torque[1] = target_torque[1] + torque_command_for_rotation
@@ -269,8 +252,6 @@ if __name__ == '__main__':
                      callback_get_odometry, queue_size=1)
 
     # (for tuning) subscriber for change PID gains via message
-    rospy.Subscriber('pid_gain', Float32,
-                     callback_change_pid_gain)
     rospy.Subscriber('new_PID_gains', PID_gains, callback_update_PID_gains)
 
     # set initial PID gains via ros parameter
