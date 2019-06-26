@@ -48,21 +48,12 @@ robot_velocity_2 = [0.0, 0.0]
 last_robot_velocity_2 = [0.0, 0.0]
 normalized_robot_velocity_2 = [0.0, 0.0]
 
-# variables and constants to watch battery boltage
-battery_voltage_warn_flag = 0
-battery_voltage_fatal_flag = 0
-
-# publish a warning when battery voltage is lower than 11200 [mV] (3.73V/cell)
-# BATTERY_VOLTAGE_WARN = 11200
-# publish warnings when battery voltage is lower than 10700 [mV] (3.57V/cell)
-# BATTERY_VOLTAGE_FATAL = 10700
-
 
 def set_parameters():
     global PULSE_PER_ROUND, WHEEL_DIAMETER, TREAD
-    PULSE_PER_ROUND = rospy.get_param('~pulse_per_round', 0.0)
-    WHEEL_DIAMETER = rospy.get_param('~wheel_diameter', 0.0)
-    TREAD = rospy.get_param('~tread', 0.0)
+    PULSE_PER_ROUND = rospy.get_param('~pulse_per_round', 4096.0)
+    WHEEL_DIAMETER = rospy.get_param('~wheel_diameter', 0.1524)
+    TREAD = rospy.get_param('~tread', 0.25)
     if PULSE_PER_ROUND == 0 or WHEEL_DIAMETER == 0 or TREAD == 0:
         rospy.logwarn(
             "if you haven't set ros parameter indicates /pulse_per_round, /wheel_diameter, and /tread, Please command '$rosparam set /***' or set them in a launch file")
@@ -72,66 +63,28 @@ def set_parameters():
 def main_function():
     global odometry_count, current_robot_location, last_robot_location, robot_velocity, dt, current_encoder_count, last_encoder_count
     global current_robot_location_2, last_robot_location_2, robot_velocity_2, current_robot_location_q, current_robot_location_2_q, normalized_robot_velocity_2
-    rospy.init_node('wheel_odometry')
 
-    # wheel_odometry_vel_pub = rospy.Publisher(
-    #     'wheel_odometry_vel', Odometry, queue_size=1)
-    wheel_odometry_pub = rospy.Publisher(
-        'wheel_odometry', Odometry, queue_size=1)
-    rospy.Subscriber('multi_servo_info', Multi_servo_info,
-                     callback_get_servo_info, queue_size=1)
-    set_parameters()
+    wheel_odometry.header.seq = odometry_count
+    wheel_odometry.pose.pose.position.x = current_robot_location_2[0]
+    wheel_odometry.pose.pose.position.y = current_robot_location_2[1]
+    wheel_odometry.pose.pose.orientation.x = current_robot_location_2_q[0]
+    wheel_odometry.pose.pose.orientation.y = current_robot_location_2_q[1]
+    wheel_odometry.pose.pose.orientation.z = current_robot_location_2_q[2]
+    wheel_odometry.pose.pose.orientation.w = current_robot_location_2_q[3]
+    wheel_odometry.twist.twist.linear.x = normalized_robot_velocity_2[0]
+    wheel_odometry.twist.twist.angular.z = normalized_robot_velocity_2[1]
+    wheel_odometry_pub.publish(wheel_odometry)
 
-    # wheel_odometry_vel = Odometry()
-    wheel_odometry = Odometry()
-    # wheel_odometry_vel.header.frame_id = 'map'
-    # wheel_odometry_vel.child_frame_id = 'frame'
-    wheel_odometry.header.frame_id = 'map'
-    wheel_odometry.child_frame_id = 'frame'
-
-    rate = rospy.Rate(40)
-    while not rospy.is_shutdown():
-        try:
-            calculate_odometry()
-
-            # wheel_odometry_vel.header.seq = odometry_count
-            # wheel_odometry_vel.pose.pose.position.x = current_robot_location[0]
-            # wheel_odometry_vel.pose.pose.position.y = current_robot_location[1]
-            # wheel_odometry_vel.pose.pose.orientation.x = current_robot_location_q[0]
-            # wheel_odometry_vel.pose.pose.orientation.y = current_robot_location_q[1]
-            # wheel_odometry_vel.pose.pose.orientation.z = current_robot_location_q[2]
-            # wheel_odometry_vel.pose.pose.orientation.w = current_robot_location_q[3]
-            # wheel_odometry_vel.twist.twist.linear.x = robot_velocity[0]
-            # wheel_odometry_vel.twist.twist.angular.z = robot_velocity[1]
-            # wheel_odometry_vel_pub.publish(wheel_odometry_vel)
-
-            wheel_odometry.header.seq = odometry_count
-            wheel_odometry.pose.pose.position.x = current_robot_location_2[0]
-            wheel_odometry.pose.pose.position.y = current_robot_location_2[1]
-            wheel_odometry.pose.pose.orientation.x = current_robot_location_2_q[0]
-            wheel_odometry.pose.pose.orientation.y = current_robot_location_2_q[1]
-            wheel_odometry.pose.pose.orientation.z = current_robot_location_2_q[2]
-            wheel_odometry.pose.pose.orientation.w = current_robot_location_2_q[3]
-            wheel_odometry.twist.twist.linear.x = normalized_robot_velocity_2[0]
-            wheel_odometry.twist.twist.angular.z = normalized_robot_velocity_2[1]
-            wheel_odometry_pub.publish(wheel_odometry)
-
-            odometry_count = odometry_count + 1
-            last_robot_location = current_robot_location
-            last_robot_location_2 = current_robot_location_2
-
-        except IOError:
-            pass
-
-        rate.sleep()
+    odometry_count = odometry_count + 1
+    last_robot_location = current_robot_location
+    last_robot_location_2 = current_robot_location_2
 
 
-def callback_get_servo_info(servo_info):
-    global battery_voltage_warn_flag, battery_voltage_fatal_flag, current_encoder_count, last_encoder_count, motor_velocity
+def callback_get_encoder(encoder):
+    global current_encoder_count, last_encoder_count, motor_velocity
     global dt, delta_encoder, current_time, last_time
-    current_encoder_count = servo_info.encoder_count
-    battery_voltage = servo_info.input_voltage
-    motor_velocity = servo_info.motor_velocity
+    current_encoder_count = encoder.encoder_count
+    # motor_velocity = encoder.motor_velocity
 
     current_time = time.time()
     dt = current_time - last_time
@@ -139,12 +92,6 @@ def callback_get_servo_info(servo_info):
         x - y for (x, y) in zip(current_encoder_count, last_encoder_count)]
     last_encoder_count = current_encoder_count
     last_time = time.time()
-    #
-    # if battery_voltage[0] < BATTERY_VOLTAGE_WARN and battery_voltage_warn_flag == 0:
-    #     rospy.logwarn('battery voltage is low !')
-    #     battery_voltage_warn_flag_left = 1
-    # elif battery_voltage[0] < BATTERY_VOLTAGE_FATAL:
-    #     rospy.logfatal('battery voltage is fatally low !')
 
 
 def calculate_odometry():
@@ -153,31 +100,6 @@ def calculate_odometry():
     global PULSE_PER_ROUND, WHEEL_DIAMETER, TREAD
     global last_robot_velocity_2, normalized_robot_velocity_2, delta_encoder
 
-    # calculate process #1 : velocity based odometry
-    # velocity_left = (
-    #     (float(delta_encoder[0]) / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
-    # velocity_right = (
-    #     (float(delta_encoder[1]) / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
-    #
-    # current_robot_location[0] = last_robot_location[0] + \
-    #     robot_velocity[0] * math.cos(last_robot_location[2]) * dt
-    # current_robot_location[1] = last_robot_location[1] + \
-    #     robot_velocity[0] * math.sin(last_robot_location[2]) * dt
-    # current_robot_location[2] = last_robot_location[2] + \
-    #     robot_velocity[1] * dt  # euler angle : yaw
-    # current_robot_location_q = tf.transformations.quaternion_from_euler(
-    #     0, 0, current_robot_location[2])
-    #
-    # robot_velocity[0] = (velocity_left + velocity_right) / \
-    #     2.0  # linear velocity [m/s]
-    # robot_velocity[1] = (velocity_right - velocity_left) / \
-    #     TREAD  # angular velocity [rad/s]
-
-    # calculate process #2 : position based odometry
-    # velocity_left_2 = (
-    #     (-1 * motor_velocity[0] / 100.0) / 360) * math.pi * WHEEL_DIAMETER
-    # velocity_right_2 = (
-    #     (motor_velocity[1] / 100.0) / 360) * math.pi * WHEEL_DIAMETER
     velocity_left_2 = (
         (-1 * delta_encoder[0] / PULSE_PER_ROUND) * math.pi * WHEEL_DIAMETER) / dt
     velocity_right_2 = (
@@ -206,6 +128,37 @@ def calculate_odometry():
 
     last_robot_velocity_2 = robot_velocity_2
 
+    # for Test : display velocity [*0.01 deg/sec]
+    # left = (delta_encoder[0] / PULSE_PER_ROUND) * 36000 / dt
+    # right = (delta_encoder[1] / PULSE_PER_ROUND) * 36000 / dt
+    # rospy.loginfo(str(left) + "  " + str(right))
+
 
 if __name__ == '__main__':
-    main_function()
+    # initialize the node
+    rospy.init_node('wheel_odometry')
+
+    # publisher to publish wheel odometry information
+    wheel_odometry_pub = rospy.Publisher(
+        'wheel_odometry', Odometry, queue_size=1)
+
+    # subscriber of motor encoder
+    rospy.Subscriber('multi_servo_info', Multi_servo_info,
+                     callback_get_encoder, queue_size=1)
+
+    set_parameters()
+
+    wheel_odometry = Odometry()
+    wheel_odometry.header.frame_id = 'map'
+    wheel_odometry.child_frame_id = 'frame'
+
+    rate = rospy.Rate(100)
+    while not rospy.is_shutdown():
+        try:
+            calculate_odometry()
+            main_function()
+
+        except IOError:
+            pass
+
+        rate.sleep()
