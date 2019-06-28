@@ -41,7 +41,7 @@ def get_data():
         data[i] = float(data[i])
     #
     posture.roll = data[0]
-    posture.pitch = data[1] * 5000
+    posture.pitch = data[1] * 500
     posture.heading = data[2]
 
     # transform posture angle[deg] to [radian]
