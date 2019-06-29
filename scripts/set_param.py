@@ -153,7 +153,7 @@ class Test(Frame):
                                       command=self.set_Igain_for_posture)
         self.slider_Igain_pos.set(current_PID_gains_posture[1])
 
-        self.slider_Dgain_pos = Scale(self, from_=0, to=30000,
+        self.slider_Dgain_pos = Scale(self, from_=0, to=60000,
                                       # value=50,
                                       orient=HORIZONTAL,
                                       length="8i",
