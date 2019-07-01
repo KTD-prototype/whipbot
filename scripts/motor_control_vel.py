@@ -50,7 +50,7 @@ PID_GAIN_POSTURE = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 PID_GAIN_LINEAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 PID_GAIN_ANGULAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 accumulated_angle_error = 0
-balancing_angle = - 0.0
+balancing_angle = - 0.35
 velocity_command_for_rotation = 0.0
 
 
@@ -134,7 +134,7 @@ def callback_get_motion_command(whipbot_motion_command):
     if linear_velocity_command != 0 or angular_velocity_command != 0:
         velocity_control()
     else:
-        balancing_angle = 0
+        # balancing_angle = 0
         velocity_command_for_rotation = 0
 
 
@@ -188,6 +188,7 @@ def posture_control():
 
     target_velocity[1] = target_velocity[1] + velocity_command_for_rotation
     target_velocity[0] = target_velocity[0] + velocity_command_for_rotation
+    # print(balancing_angle)
     # rospy.loginfo(target_velocity)
     # rospy.loginfo(velocity_command_for_rotation)
     # rospy.loginfo(balancing_angle)
