@@ -50,7 +50,7 @@ PID_GAIN_POSTURE = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 PID_GAIN_LINEAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 PID_GAIN_ANGULAR_VELOCITY = [0.0, 0.0, 0.0]  # [P gain, I gain, D gain]
 accumulated_angle_error = 0
-balancing_angle = - 0.35
+balancing_angle = - 0.2
 velocity_command_for_rotation = 0.0
 
 
