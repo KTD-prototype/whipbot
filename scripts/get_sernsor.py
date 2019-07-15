@@ -89,9 +89,6 @@ if __name__ == '__main__':
             get_data()
             posture_angle_pub.publish(posture)
             imu_pub.publish(imu_data)
-            # for debug(monitor loop rate)
-            # rospy.loginfo(count)
-            # count = count + 1
 
         except IOError:
             pass
