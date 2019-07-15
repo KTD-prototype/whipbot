@@ -7,7 +7,7 @@
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="hozu.kazu.hozu@gmail.com">k24koba</maintainer>
+  <maintainer email="ktd.prototype@gmail.com">KTD-prototype</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,13 +19,13 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <url type="website">https://github.com/k24koba/whipbot</url>
+  <url type="website">https://github.com/KTD-prototype/whipbot</url>
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
   <!-- Authors do not have to be maintainers, but could be -->
   <!-- Example: -->
-  <author email="hozu.kazu.hozu@gmail.com">k24koba</author>
+  <author email="ktd.prototype@gmail.com">KTD-prototype</author>
 
 
   <!-- The *depend tags are used to specify dependencies -->
