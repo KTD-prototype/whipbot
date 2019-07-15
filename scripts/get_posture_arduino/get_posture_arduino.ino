@@ -12,7 +12,8 @@ LSM9DS1 imu;
 #define SAMPLING_RATE 100
 
 volatile int interrupt_flag = 1;
-int flag = 1;
+int flag = 1; //flag==1 then use for ROS, flag==0 then use for debug
+int noise_filtering_flag = 0; //ジャイロのスパイクノイズをフィルタする場合は１にする。
 
 int previous_time = 0;
 int present_time = 0;
@@ -23,6 +24,7 @@ float offset_gy = 0;
 float offset_gz = 0;
 
 float accelX, accelY, accelZ, gyroX, gyroY, gyroZ, magX, magY, magZ, roll, pitch, heading, ACCroll, ACCpitch;
+float last_gyroX = 0, last_gyroY = 0, last_gyroZ = 0, filtered_gyroX = 0, filtered_gyroY = 0, filtered_gyroZ = 0;
 
 
 
@@ -70,35 +72,55 @@ void loop() {
     //    print_time();
   }
 
-  if (flag == 1) {
-    Serial.println(roll);
-    Serial.println(pitch);
-    Serial.println(heading);
-    Serial.println(accelX);
-    Serial.println(accelY);
-    Serial.println(accelZ);
-    Serial.println(gyroX);
-    Serial.println(gyroY);
-    Serial.println(gyroZ);
-    flag = 0;
+  if (flag == 0) {
+
+    //    Serial.print(roll);
+    //    Serial.print(',');
+    //    Serial.print(pitch);
+    //    Serial.print(',');
+    //    Serial.println(heading);
+
+
+    //    Serial.print(accelX);
+    //    Serial.print(',');
+    //    Serial.print(accelY);
+    //    Serial.print(',');
+    //    Serial.println(accelZ);
+
+
+    //    Serial.print(gyroX);
+    //    Serial.print(',');
+    //    Serial.print(gyroY);
+    //    Serial.print(',');
+    //    Serial.println(gyroZ);
+    //
+    //    Serial.print(filtered_gyroX);
+    //    Serial.print(',');
+    //    Serial.print(filtered_gyroY);
+    //    Serial.print(',');
+    //    Serial.println(filtered_gyroZ);
+
+    //    print_time();
   }
 
-  if (Serial.available() > 0) {
-    while (Serial.available() > 0) {
-      Serial.read();
-      //      Serial.println("read!");
+  if (flag == 1) {
+    if (Serial.available() > 0) {
+      while (Serial.available() > 0) {
+        Serial.read();
+        //      Serial.println("read!");
+      }
+      Serial.println(roll);
+      Serial.println(pitch);
+      Serial.println(heading);
+      Serial.println(accelX);
+      Serial.println(accelY);
+      Serial.println(accelZ);
+      Serial.println(gyroX);
+      Serial.println(gyroY);
+      Serial.println(gyroZ);
+      //    print_time();
+      Serial.flush();
     }
-    Serial.println(roll);
-    Serial.println(pitch);
-    Serial.println(heading);
-    Serial.println(accelX);
-    Serial.println(accelY);
-    Serial.println(accelZ);
-    Serial.println(gyroX);
-    Serial.println(gyroY);
-    Serial.println(gyroZ);
-    //    print_time();
-    Serial.flush();
   }
 }
 

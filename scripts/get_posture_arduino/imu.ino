@@ -1,11 +1,12 @@
 float k, g;
+float a = 0.7;
 #define C 1
 
 void get_IMU_data() {
   imu.readGyro();
-  delay(1);
+  delayMicroseconds(100);
   imu.readAccel();
-  delay(1);
+  delayMicroseconds(100);
   gyroX = imu.calcGyro(imu.gx - offset_gx);
   gyroY = imu.calcGyro(imu.gy - offset_gy);
   gyroZ = imu.calcGyro(imu.gz - offset_gz);
@@ -15,13 +16,19 @@ void get_IMU_data() {
   magX = imu.calcMag(imu.mx);
   magY = imu.calcMag(imu.my);
   magZ = imu.calcMag(imu.mz);
+
+
+  //ジャイロの値にスパイクノイズが入るため、フィルタする。
+  if (noise_filtering_flag == 1) {
+    filtered_gyroX = a * last_gyroX + (1 - a) * gyroX;
+    filtered_gyroY = a * last_gyroY + (1 - a) * gyroY;
+    filtered_gyroZ = a * last_gyroZ + (1 - a) * gyroZ;
+  }
+  last_gyroX = filtered_gyroX;
+  last_gyroY = filtered_gyroY;
+  last_gyroZ = filtered_gyroZ;
 }
 
-//void normarize_gyroZ() {
-//  if (gyroZ == 0.0700 || gyroZ == 0.1400 || gyroZ == 0.2800 || gyroZ == -0.0700 || gyroZ == -0.1400 || gyroZ == -0.2800) {
-//    gyroZ = 0;
-//  }
-//}
 
 void get_posture_complementary_filter() {
   g = sqrt(pow(accelX, 2) + pow(accelY, 2) + pow(accelZ, 2));

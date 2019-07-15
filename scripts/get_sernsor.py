@@ -41,26 +41,29 @@ def get_data():
         data[i] = float(data[i])
     #
     posture.roll = data[0]
-    posture.pitch = data[1] * 500
+    posture.pitch = data[1]
     posture.heading = data[2]
 
     # transform posture angle[deg] to [radian]
     for i in range(3):
         data[i] = data[i] * math.pi / 180.0
+
+    # transform posture from euler to quaternion
     posture_angle_quaternion = tf.transformations.quaternion_from_euler(
         data[0], data[1], data[2])
-    # print(posture_angle_quaternion)
+
+    # contain to the message : /imu
     imu_data.orientation.x = posture_angle_quaternion[0]
     imu_data.orientation.y = posture_angle_quaternion[1]
     imu_data.orientation.z = posture_angle_quaternion[2]
     imu_data.orientation.w = posture_angle_quaternion[3]
 
-    # transform to [m/s^2] from [g]
+    # transform to [m/s^2] from [g] and contain to the message : /imu
     imu_data.linear_acceleration.x = data[3] * 9.81
     imu_data.linear_acceleration.y = data[4] * 9.81
     imu_data.linear_acceleration.z = data[5] * 9.81
 
-    # transform to [rad/sec] from [deg/sec]
+    # transform to [rad/sec] from [deg/sec] and contain to the message : /imu
     imu_data.angular_velocity.x = data[6] * math.pi / 180
     imu_data.angular_velocity.y = data[7] * math.pi / 180
     imu_data.angular_velocity.z = data[8] * math.pi / 180
