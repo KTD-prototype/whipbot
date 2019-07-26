@@ -3,6 +3,7 @@ float sum_gy = 0;
 float sum_gz = 0;
 
 
+// get hundreds of gyro data and get mean of them to cancel native noise of the sensor
 void init_gyro_process() {
   for (int i = 0; i < NUM_OF_SAMPLES_FOR_INIT; i++) {
     // wait for new data available

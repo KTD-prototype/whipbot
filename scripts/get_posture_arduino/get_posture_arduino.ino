@@ -7,30 +7,39 @@ LSM9DS1 imu;
 #define LSM9DS1_M 0x1C // Would be 0x1C if SDO_M is LOW
 #define LSM9DS1_AG  0x6A // Would be 0x6A if SDO_AG is LOW
 
-// define the number of sample to get data to calibrate and sampling rate
+// after start processing, sample sensor data for "NUM_OF_SAMPLES_FOR_INIT" times to cancel native noise of the sensor
 #define NUM_OF_SAMPLES_FOR_INIT 200
-#define SAMPLING_RATE 100
-
-volatile int interrupt_flag = 1;
-int flag = 1; //flag==1 then use for ROS, flag==0 then use for debug
-int noise_filtering_flag = 0; //ジャイロのスパイクノイズをフィルタする場合は１にする。
-
-int previous_time = 0;
-int present_time = 0;
-int passed_time = 0;
-
+// parameters to contain native noise of the sensor to be canceled
 float offset_gx = 0;
 float offset_gy = 0;
 float offset_gz = 0;
 
+// define sampling rate (Hz)
+#define SAMPLING_RATE 100
+
+// flag parameter to activate timer interruption
+volatile int interrupt_flag = 1;
+
+
+int ros_flag = 1; //flag==1 then use for ROS, flag==0 then use for debug
+int noise_filtering_flag = 0; //ジャイロのスパイクノイズをフィルタする場合は１にする。
+
+// parameter to contain time to measure spent time of a control loop
+int previous_time = 0;
+int present_time = 0;
+int passed_time = 0;
+
+// parameter to contain sensor value
 float accelX, accelY, accelZ, gyroX, gyroY, gyroZ, magX, magY, magZ, roll, pitch, heading, ACCroll, ACCpitch;
 float last_gyroX = 0, last_gyroY = 0, last_gyroZ = 0, filtered_gyroX = 0, filtered_gyroY = 0, filtered_gyroZ = 0;
 
 
 
 void setup() {
+  //  start serial communication
   Serial.begin(115200);
 
+  //  start sensor LSM9DS1 processing (refer sample code of the library)
   imu.settings.device.commInterface = IMU_MODE_I2C;
   imu.settings.device.mAddress = LSM9DS1_M;
   imu.settings.device.agAddress = LSM9DS1_AG;
@@ -53,9 +62,8 @@ void setup() {
 
   // initial process to subtract gyro offset from measured data
   init_gyro_process();
-  //  Serial.println("finished initialization !");
-  //  Serial.println();
 
+  //  flush serial input buffer
   while (Serial.available() > 0) {
     Serial.read();
   }
@@ -65,13 +73,22 @@ void setup() {
 }
 
 void loop() {
+
+  //  execute reading sensor process only if the interrupt flag is on
   if (interrupt_flag == 1) {
+    //  get sensor data
     get_IMU_data();
+
+    //  get posture data from complementary filter
     get_posture_complementary_filter();
+
+    //  turn off the interruption flag
     interrupt_flag = 0;
     //    print_time();
   }
 
+
+  //  (for dubugging) if it is not connected to ROS node
   if (flag == 0) {
 
     //    Serial.print(roll);
@@ -103,12 +120,19 @@ void loop() {
     //    print_time();
   }
 
-  if (flag == 1) {
+
+
+  //  if it is connected to ROS node to send IMU data to inverted pendulum
+  if (ros_flag == 1) {
+
+    //  receive message trigger from the connected ROS node 
     if (Serial.available() > 0) {
       while (Serial.available() > 0) {
+        //  flush message trigger
         Serial.read();
-        //      Serial.println("read!");
       }
+
+      //  send IMU data
       Serial.println(roll);
       Serial.println(pitch);
       Serial.println(heading);
@@ -125,10 +149,16 @@ void loop() {
 }
 
 
+//  function when timer interrupt has occured
+//  just turn on the interruption flag, so that the IMU data read process will be executed
+//  it could be implemented as read & process IMU data in this function, but it wouldn't work.
+//  timer for interruption and I2C communication may be in conflict...? 
 void interrupt_function() {
   interrupt_flag = 1;
 }
 
+
+// print the passed time per loop if you need
 void print_time() {
   present_time = micros();
   passed_time = present_time - previous_time;
