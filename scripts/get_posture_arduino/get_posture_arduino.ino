@@ -21,7 +21,7 @@ float offset_gz = 0;
 volatile int interrupt_flag = 1;
 
 
-int ros_flag = 1; //flag==1 then use for ROS, flag==0 then use for debug
+int ros_flag = 0; //flag==1 then use for ROS, flag==0 then use for debug
 int noise_filtering_flag = 0; //ジャイロのスパイクノイズをフィルタする場合は１にする。
 
 // parameter to contain time to measure spent time of a control loop
@@ -44,10 +44,12 @@ void setup() {
   imu.settings.device.mAddress = LSM9DS1_M;
   imu.settings.device.agAddress = LSM9DS1_AG;
 
+  //  set up sensor LSM9DS1(refer sample code of the library)
   setupGyro();
   setupAccel();
   setupMag();
 
+  //  error message when beggining was failed
   if (!imu.begin())
   {
     Serial.println("Failed to communicate with LSM9DS1.");
@@ -88,8 +90,8 @@ void loop() {
   }
 
 
-  //  (for dubugging) if it is not connected to ROS node
-  if (flag == 0) {
+  //  (for debugging) if it is not connected to ROS node
+  if (ros_flag == 0) {
 
     //    Serial.print(roll);
     //    Serial.print(',');
@@ -105,11 +107,11 @@ void loop() {
     //    Serial.println(accelZ);
 
 
-    //    Serial.print(gyroX);
-    //    Serial.print(',');
-    //    Serial.print(gyroY);
-    //    Serial.print(',');
-    //    Serial.println(gyroZ);
+    Serial.print(gyroX);
+    Serial.print(',');
+    Serial.print(gyroY);
+    Serial.print(',');
+    Serial.println(gyroZ);
     //
     //    Serial.print(filtered_gyroX);
     //    Serial.print(',');
@@ -125,7 +127,7 @@ void loop() {
   //  if it is connected to ROS node to send IMU data to inverted pendulum
   if (ros_flag == 1) {
 
-    //  receive message trigger from the connected ROS node 
+    //  receive message trigger from the connected ROS node
     if (Serial.available() > 0) {
       while (Serial.available() > 0) {
         //  flush message trigger
@@ -152,7 +154,7 @@ void loop() {
 //  function when timer interrupt has occured
 //  just turn on the interruption flag, so that the IMU data read process will be executed
 //  it could be implemented as read & process IMU data in this function, but it wouldn't work.
-//  timer for interruption and I2C communication may be in conflict...? 
+//  timer for interruption and I2C communication may be in conflict...?
 void interrupt_function() {
   interrupt_flag = 1;
 }
