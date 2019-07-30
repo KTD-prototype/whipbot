@@ -21,7 +21,7 @@ float offset_gz = 0;
 volatile int interrupt_flag = 1;
 
 
-int ros_flag = 0; //flag==1 then use for ROS, flag==0 then use for debug
+int ros_flag = 1; //flag==1 then use for ROS, flag==0 then use for debug
 int noise_filtering_flag = 0; //ジャイロのスパイクノイズをフィルタする場合は１にする。
 
 // parameter to contain time to measure spent time of a control loop
