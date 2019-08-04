@@ -7,7 +7,6 @@
 # it collects IMU data from arduino.
 #
 
-
 import rospy
 import serial
 import time
@@ -16,30 +15,42 @@ import sys
 import tf
 import math
 from sensor_msgs.msg import Imu
+
+# message for publishing auler angle, so that I can recognize robot's posture intuitively
 from whipbot.msg import Posture_angle
 
+# start serial communication
+# using symbolic link, Lmabda will recognized as "/dev/Lambda" whereever/whenever port you connect
 ser = serial.Serial('/dev/Lambda', 115200)
+
+# prepare command to request data send to Lambda Plus
+# I forgot why I write as bellow?
 send_command = []
 send_command += [chr(1)]
-count = 0
+
+# prepare data list sent from Lambda Plus
 data = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 
-def get_data():
+def get_data():  # function to receive IMU data from Lambda. Executed at 100 Hz by ROS node
+    # reset input buffer
     ser.reset_input_buffer()
+
+    # send data request to Lambda
     ser.write(send_command)
-    # print("sended!")
+
+    # wait until the reply has reached to this node (36 must be inappropriate...)
     while ser.inWaiting() < 36:
-        # print("loop")
-        # print("")
         pass
 
     # i:0 to 8, roll, pitch, heading, accelX,Y,Z, gyroX,Y,Z
     for i in range(9):
-        data[i] = ser.readline()
+        data[i] = ser.readline()  # read data line by line
+        # remove return code and end point null
         data[i] = data[i].replace('\r\n', '')
-        data[i] = float(data[i])
-    #
+        data[i] = float(data[i])  # convert into float type parameter
+
+    # contain into ROS message
     posture.roll = data[0]
     posture.pitch = data[1]
     posture.heading = data[2]
@@ -70,15 +81,19 @@ def get_data():
 
 
 if __name__ == '__main__':
-    rospy.init_node('get_sernsor')
+    rospy.init_node('get_sernsor')  # initialize node
+
     posture_angle_pub = rospy.Publisher(
-        'posture_angle', Posture_angle, queue_size=1)
+        'posture_angle', Posture_angle, queue_size=1)  # define auler angle publisher
+
+    # define /Imu publisher
     imu_pub = rospy.Publisher('/imu', Imu, queue_size=1)
 
+    # declare publisher
     posture = Posture_angle()
     imu_data = Imu()
     imu_data.header.frame_id = 'map'
-    # you should wait for a while until your arduino is ready
+    # you should wait for a while until your Lambda Plus is ready
     time.sleep(5)
 
     # set the loop rate at 50Hz (higher is better, but it looks 60Hz is MAXIMUM for my environment)
@@ -86,9 +101,10 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
         try:
-            get_data()
+            get_data()  # function to get data from Lambda
+            # publish posture angle at auler angle
             posture_angle_pub.publish(posture)
-            imu_pub.publish(imu_data)
+            imu_pub.publish(imu_data)  # publish as sensor_msgs/Imu
 
         except IOError:
             pass
