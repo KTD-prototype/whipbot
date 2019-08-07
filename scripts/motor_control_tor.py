@@ -159,16 +159,6 @@ def velocity_control():
     last_linear_velocity = current_linear_velocity
     last_angular_velocity = current_angular_velocity
     last_timestamp = time.time()
-    # if linear_velocity_command >= 0:
-    #     target_torque[0] = target_torque[0] + (-1) * linear_velocity_command * \
-    #         1000 + angular_velocity_command * 30
-    #     target_torque[1] = target_torque[1] + linear_velocity_command * \
-    #         1000 + angular_velocity_command * 30
-    # else:
-    #     target_torque[0] = target_torque[0] + (-1) * linear_velocity_command * \
-    #         1000 - angular_velocity_command * 30
-    #     target_torque[1] = target_torque[1] + linear_velocity_command * \
-    #         1000 - angular_velocity_command * 30
 
 
 def posture_control():
@@ -186,11 +176,6 @@ def posture_control():
 
     target_torque[1] = target_torque[1] + torque_command_for_rotation
     target_torque[0] = target_torque[0] + torque_command_for_rotation
-    # print(balancing_angle)
-    # rospy.loginfo(target_torque)
-    # rospy.loginfo(torque_command_for_rotation)
-    # rospy.loginfo(balancing_angle)
-    # rospy.loginfo(PID_GAIN_POSTURE)
 
 
 def servo_command():
